@@ -7,3 +7,7 @@ The project provides bindings for [CEF](https://bitbucket.org/chromiumembedded/c
 Apache 2.0
 See the LICENSE.txt 
 
+
+The project includes files and dependencies from BSD-licensed CEF library
+
+
