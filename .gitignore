@@ -4,4 +4,4 @@ build/
 *.iml
 *.ipr
 
-
+cmake-build-debug
