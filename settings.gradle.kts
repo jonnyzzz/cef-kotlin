@@ -1,5 +1,5 @@
 
 include("deps-cef")
-include("mpp")
+include("cef-mpp")
 include("cef-gen")
 
