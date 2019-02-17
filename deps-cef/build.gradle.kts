@@ -47,26 +47,6 @@ cef_builds.filter{ it.key.isCurrent }.forEach { (os2, url) ->
   cefUnpack.dependsOn(unpack)
 }
 
-
-/*
-final String os = System.getProperty("os.name", "unknown").toLowerCase()
-final boolean isWindows = os.contains("windows")
-final boolean isMac = os.contains("mac") || os.contains("os x")
-final boolean isLinux = os.contains("linux") || os.contains("unix")
-final def windowsLinuxMac = { windows, linux, mac ->
-  if (isWindows) return windows
-  if (isLinux) return linux
-  if (isMac) return mac
-  throw new Error("Failed to find suitable OS: $os")
-}
-ext.windowsLinuxMac = windowsLinuxMac
-ext.isWindows = isWindows
-ext.isLinux = isLinux
-ext.isMac = isMac
-ext.os = os.replaceAll("\\s+", "_")
-ext.isTeamCityBuild = System.getenv("TEAMCITY_VERSION") != null
-*/
-
 enum class OS {
   Windows,
   Linux,
