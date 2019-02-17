@@ -3,6 +3,7 @@ package org.jonnyzzz.cef.generator
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.konan.library.createKonanLibrary
 import org.jetbrains.kotlin.konan.target.KonanTarget
@@ -10,6 +11,7 @@ import org.jetbrains.kotlin.konan.util.KonanFactories.DefaultDeserializedDescrip
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
+import org.jetbrains.kotlin.types.TypeSubstitution
 import java.io.File
 import java.util.*
 
@@ -70,7 +72,7 @@ private fun mainImpl(args: Array<String>) {
 private fun visitModule(module: ModuleDescriptor) {
   println(module)
 
-  sequence {
+  val descriptors = sequence {
     val queue = ArrayDeque(listOf(FqName.ROOT))
     val visited = mutableSetOf<FqName>()
     while (queue.isNotEmpty()) {
@@ -87,7 +89,15 @@ private fun visitModule(module: ModuleDescriptor) {
   }.flatMap {
     println("fragment: $it")
     it.getMemberScope().getContributedDescriptors().filter { it.shouldBePrinted }
-  }.forEach {
-    println("DeclarationScope: $it")
+  }
+
+  descriptors.forEach {
+    println("${it.javaClass.simpleName}: $it")
+  }
+
+  val cefAppT = descriptors.filterIsInstance<ClassDescriptor>().first { it.name.asString() == "_cef_app_t" }
+  println(cefAppT)
+  cefAppT.getMemberScope(TypeSubstitution.EMPTY).getContributedDescriptors().filter { it.shouldBePrinted }.forEach {
+    println("  ${it.javaClass.simpleName}: $it")
   }
 }
