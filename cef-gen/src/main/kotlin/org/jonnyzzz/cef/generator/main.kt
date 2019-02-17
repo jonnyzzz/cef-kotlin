@@ -56,6 +56,7 @@ private fun mainImpl(args: Array<String>) {
   println("library - ${library.abiVersion}")
   println("library - ${library.libraryFile}")
   println("library - ${library.libraryName}")
+  println("library - ${library.linkerOpts}")
 
   val storageManager = LockBasedStorageManager()
   val versionSpec = LanguageVersionSettingsImpl(LanguageVersion.LATEST_STABLE, ApiVersion.LATEST_STABLE)

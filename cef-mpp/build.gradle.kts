@@ -1,4 +1,4 @@
-import org.jonnyzzz.cef.gradle.div
+import org.jonnyzzz.cef.gradle.*
 import java.io.FileFilter
 
 plugins {
@@ -9,17 +9,14 @@ repositories {
   mavenCentral()
 }
 
-val cefHomeMac = project(":deps-cef").run {
-  //TODO: use dependency from `:deps-cef`, and publish artifact from it instead.
-  file(buildDir / "cef_binaries_base" / "cef_mac", PathValidation.DIRECTORY)
-}
-
 val cefDefFile by lazy { buildDir / "cef.def" }
 
 val generateCefDefMac by tasks.creating {
   group = "interop"
+
+  inputs.file(buildFile)
+  inputs.file(project(":deps-cef").buildFile)
   outputs.file(cefDefFile)
-  inputs.dir(cefHomeMac)
 
   doLast {
     val cefHeaders = (cefHomeMac / "include" / "capi").listFiles(FileFilter {
@@ -29,8 +26,10 @@ val generateCefDefMac by tasks.creating {
     val defFileText = "" +
             "## generated from task $name from $buildFile\n" +
             "headers = \\\n$cefHeaders\n" +
-            "\n\n"
-
+            "\n\n" +
+//            "linkerOpts = -F ${cefHomeMac / "Debug"} \\\n" +
+//            "             -framework Chromium Embedded Framework\n\n" +
+            ""
 
     println("cef.def:\n$defFileText\n\n")
     cefDefFile.writeText(defFileText)
@@ -53,6 +52,22 @@ kotlin {
         if (it.name == interopProcessingTaskName) {
           it.dependsOn(generateCefDefMac)
         }
+      }
+    }
+  }
+
+  val atomicFuVersion = "0.12.1"
+
+  sourceSets {
+    val commonMain by getting {
+      dependencies {
+        implementation("org.jetbrains.kotlinx:atomicfu-common:$atomicFuVersion")
+      }
+    }
+
+    val macosX64Main by getting {
+      dependencies {
+        implementation("org.jetbrains.kotlinx:atomicfu-native:$atomicFuVersion")
       }
     }
   }
