@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.konan.library.createKonanLibrary
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.konan.util.KonanFactories.DefaultDeserializedDescriptorFactory
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import java.io.File
 import java.util.*
@@ -66,25 +67,27 @@ private fun mainImpl(args: Array<String>) {
 }
 
 
-private fun visitModule(module : ModuleDescriptor) {
+private fun visitModule(module: ModuleDescriptor) {
   println(module)
 
   sequence {
     val queue = ArrayDeque(listOf(FqName.ROOT))
     val visited = mutableSetOf<FqName>()
-    while(queue.isNotEmpty()) {
+    while (queue.isNotEmpty()) {
       val next = queue.removeFirst()
       if (!visited.add(next)) continue
 
       queue.addAll(module.getSubPackagesOf(next) { true })
       yield(module.getPackage(next))
     }
-  }.toList().flatMap {
+  }.filter { it.module === module && it.fqName.startsWith(Name.identifier("org.jonnyzzz.cef.interop")) }
+  .toList().flatMap {
     println("package: $it")
     it.fragments
   }.flatMap {
     println("fragment: $it")
     it.getMemberScope().getContributedDescriptors().filter { it.shouldBePrinted }
   }.forEach {
-    println("DeclarationScope: $it")}
+    println("DeclarationScope: $it")
+  }
 }
