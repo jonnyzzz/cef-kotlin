@@ -26,6 +26,7 @@ configurations.forEach { config ->
 dependencies {
   implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
   implementation("org.jetbrains.kotlin:kotlin-native-library-reader:$kotlinVersion")
+  implementation("org.jetbrains.kotlin:kotlin-compiler:$kotlinVersion")
   implementation("org.jetbrains.kotlin:kotlin-native-utils:$kotlinVersion")
 }
 
