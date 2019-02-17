@@ -5,6 +5,10 @@ plugins {
   id("org.jetbrains.kotlin.multiplatform")
 }
 
+repositories {
+  mavenCentral()
+}
+
 val cefHomeMac = project(":deps-cef").run {
   //TODO: use dependency from `:deps-cef`, and publish artifact from it instead.
   file(buildDir / "cef_binaries_base" / "cef_mac", PathValidation.DIRECTORY)
@@ -37,9 +41,8 @@ val generateCefDefMac by tasks.creating {
 kotlin {
   macosX64 {
     val main by compilations
-    main.cinterops.create("kotlin-cef-interop") {
 
-      this.interopProcessingTaskName
+    main.cinterops.create("kotlinCefInterop") {
       defFile = cefDefFile
       packageName = "org.jonnyzzz.cef.interop"
 
