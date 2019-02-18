@@ -27,8 +27,8 @@ val generateCefDefMac by tasks.creating {
             "## generated from task $name from $buildFile\n" +
             "headers = \\\n$cefHeaders\n" +
             "\n\n" +
-//            "linkerOpts = -F ${cefHomeMac / "Debug"} \\\n" +
-//            "             -framework Chromium Embedded Framework\n\n" +
+            "linkerOpts = -F ${cefHomeMac / "Debug"} \\\n" +
+            "             -framework \"Chromium Embedded Framework\" \n\n" +
             ""
 
     println("cef.def:\n$defFileText\n\n")
