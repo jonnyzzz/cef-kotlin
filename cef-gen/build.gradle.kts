@@ -39,5 +39,5 @@ configure<ApplicationPluginConvention> {
 
 tasks.getByName<JavaExec>("run") {
   args = listOf(
-          (project(":cef-mpp").buildDir / "classes/kotlin/macosX64/main/mpp-cinterop-kotlinCefInterop.klib").path)
+          (project(":cef-mpp").buildDir / "classes/kotlin/macosX64/main/cef-mpp-cinterop-kotlinCefInterop.klib").path)
 }
