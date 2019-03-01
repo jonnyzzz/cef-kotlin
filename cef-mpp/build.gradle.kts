@@ -14,8 +14,6 @@ setupCefConfigurations {
     group = "interop"
 
     dependsOn(cef_include)
-
-    inputs.file(buildFile)
     outputs.file(cefDefFile)
 
     doLast {
