@@ -10,7 +10,7 @@ setupCefConfigurations {
 
   val cefDefFile by lazy { buildDir / "cef.def" }
 
-  val generateCEFDef by tasks.creating {
+  val generateCefDef by tasks.creating {
     group = "interop"
 
     dependsOn(cef_include)
@@ -50,7 +50,7 @@ setupCefConfigurations {
 
         setupInteropProcessingTask(project) {
           dependsOn(cef_include)
-          dependsOn(generateCEFDef)
+          dependsOn(generateCefDef)
         }
       }
     }
