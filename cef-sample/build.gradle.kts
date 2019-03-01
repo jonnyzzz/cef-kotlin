@@ -1,4 +1,5 @@
-import org.jonnyzzz.cef.gradle.*
+import org.jonnyzzz.cef.gradle.cefHomeMac
+import org.jonnyzzz.cef.gradle.div
 
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
@@ -14,7 +15,13 @@ kotlin {
     binaries {
       executable {
         compilations["main"].kotlinOptions.freeCompilerArgs = listOf("-Xverbose-phases=linker")
-        
+/*
+        linkerOpts.addAll(listOf(
+                "-F", "${cefHomeMac / "Debug"}",
+                "-framework", "\"Chromium Embedded Framework\"")
+        )
+*/
+
         entryPoint = "org.jonnyzzz.cef.example.main"
       }
     }

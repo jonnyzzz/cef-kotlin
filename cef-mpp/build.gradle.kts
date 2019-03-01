@@ -1,3 +1,4 @@
+import java.util.Properties
 import org.jonnyzzz.cef.gradle.*
 import java.io.FileFilter
 
@@ -21,18 +22,20 @@ val generateCefDefMac by tasks.creating {
   doLast {
     val cefHeaders = (cefHomeMac / "include" / "capi").listFiles(FileFilter {
       it.isFile && it.name.startsWith("cef_") && it.name.endsWith(".h")
-    })?.sorted()?.joinToString(" \\\n") { "          " + it.relativeTo(cefHomeMac) }
+    })?.sorted()?.joinToString(" ") { it.relativeTo(cefHomeMac).path }
 
-    val defFileText = "" +
-            "## generated from task $name from $buildFile\n" +
-            "headers = \\\n$cefHeaders\n" +
-            "\n\n" +
-            "linkerOpts = -F ${cefHomeMac / "Debug"} \\\n" +
-            "             -framework \"Chromium Embedded Framework\" \n\n" +
-            ""
+    val def = Properties()
 
-    println("cef.def:\n$defFileText\n\n")
-    cefDefFile.writeText(defFileText)
+    def.setProperty("headers", cefHeaders)
+    // https://youtrack.jetbrains.com/issue/KT-29970
+    // def.setProperty("linkerOpts", "-F ${cefHomeMac / "Debug"} -framework Chromium\\ Embedded\\ Framework")
+
+    cefDefFile.printWriter().use { out ->
+      def.store(out, "generated from task $name from $buildFile")
+
+      out.println()
+      out.println()
+    }
   }
 }
 
