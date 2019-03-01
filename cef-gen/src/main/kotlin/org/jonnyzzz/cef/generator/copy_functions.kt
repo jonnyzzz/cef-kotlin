@@ -33,7 +33,7 @@ fun GeneratorParameters.generateCopyFunctions(clazzez: List<ClassDescriptor>) {
 
 
 fun GeneratorParameters.generateCopyFunction(clazz: ClassDescriptor) {
-  val className = ClassName(clazz.parents.firstIsInstance<KonanPackageFragment>().fqName.asString(), clazz.name.asString())
+  val className = clazz.toClassName()
 
 
   val poet = FileSpec.builder(

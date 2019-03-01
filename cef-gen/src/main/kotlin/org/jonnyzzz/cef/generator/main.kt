@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.konan.library.createKonanLibrary
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.konan.util.KonanFactories.DefaultDeserializedDescriptorFactory
@@ -99,7 +100,8 @@ private fun GeneratorParameters.visitModule(module: ModuleDescriptor) {
     println("${it.javaClass.simpleName}: $it")
   }
 
+  println("------------\n\n\n")
+
   generateCopyFunctions(descriptors.filterIsInstance<ClassDescriptor>())
-
-
+  generateValFunctions(descriptors.filterIsInstance<PropertyDescriptor>())
 }
