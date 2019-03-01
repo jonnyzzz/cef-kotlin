@@ -38,6 +38,16 @@ configure<ApplicationPluginConvention> {
 
 
 tasks.getByName<JavaExec>("run") {
+  val targetDir = project(":cef-mpp").buildDir / "generated-cef"
+  val klibFile = project(":cef-mpp").buildDir / "classes/kotlin/macosX64/main/cef-mpp-cinterop-kotlinCefInterop.klib"
+
+  doFirst {
+    delete(targetDir)
+  }
+  1
   args = listOf(
-          (project(":cef-mpp").buildDir / "classes/kotlin/macosX64/main/cef-mpp-cinterop-kotlinCefInterop.klib").path)
+          //TODO: ugly paths!
+          klibFile.path,
+          targetDir.path
+  )
 }

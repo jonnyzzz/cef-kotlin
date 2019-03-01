@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.konan.util.KonanFactories.DefaultDeserializedDescrip
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
-import org.jetbrains.kotlin.types.TypeSubstitution
 import java.io.File
 import java.util.*
 
@@ -30,14 +29,17 @@ fun main(args: Array<String>) {
 
 operator fun File.div(s: String) = File(this, s)
 
+data class GeneratorParameters(val outputDir: File)
+
 private fun mainImpl(args: Array<String>) {
   println("Kotlin CEF API generator.")
   println("  the part similar to https://bitbucket.org/chromiumembedded/cef/src/master/tools/translator.README.txt")
   println()
   println("usage:")
-  println(" <too> cef.klib")
+  println(" <too> cef.klib <outputDir>")
 
   val klibPath = args.getOrNull(0)?.let { File(it).absoluteFile } ?: error("Failed to find .klib")
+  val outputDir = args.getOrNull(1)?.let { File(it).absoluteFile } ?: error("Failed to find target directory")
   val stdlibPath = File(System.getProperty("user.home")) / ".konan" / "kotlin-native-macos-1.1.2" / "klib" / "common" / "stdlib"
 
   val stdlib = createKonanLibrary(
@@ -66,11 +68,12 @@ private fun mainImpl(args: Array<String>) {
   stdlibModule.setDependencies(listOf(stdlibModule))
   module.setDependencies(listOf(module, stdlibModule))
 
-  visitModule(module)
+  val generatorParams = GeneratorParameters(outputDir)
+  generatorParams.visitModule(module)
 }
 
 
-private fun visitModule(module: ModuleDescriptor) {
+private fun GeneratorParameters.visitModule(module: ModuleDescriptor) {
   println(module)
 
   val descriptors = sequence {

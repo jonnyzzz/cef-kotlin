@@ -63,6 +63,8 @@ setupCefConfigurations {
       }
 
       val macosX64Main by getting {
+        kotlin.srcDir(buildDir / "generated-cef")
+        
         dependencies {
           implementation("org.jetbrains.kotlinx:atomicfu-native:$atomicFuVersion")
         }

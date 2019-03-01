@@ -1,37 +1,51 @@
 package org.jonnyzzz.cef.generator
 
+import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.resolve.descriptorUtil.classId
+import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
 import org.jetbrains.kotlin.resolve.descriptorUtil.parents
 import org.jetbrains.kotlin.serialization.konan.KonanPackageFragment
 import org.jetbrains.kotlin.types.TypeSubstitution
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 
 
-val copyMethodName = "copyFrom"
+private const val copyMethodName = "copyFrom"
 
 
-fun generateCopyFunctions(clazzez: List<ClassDescriptor>) {
-  val cefAppT = clazzez.filterIsInstance<ClassDescriptor>().first { it.name.asString() == "_cef_app_t" }
+fun GeneratorParameters.generateCopyFunctions(clazzez: List<ClassDescriptor>) {
+  clazzez.forEach {
 
-  generateCopyFunction(cefAppT)
+    if (it.name.asString() != "sched_param" && it.getSuperClassNotAny()?.classId == ClassId.fromString("kotlinx/cinterop/CStructVar")) {
+      println("${it.name.asString()} - generate")
+      generateCopyFunction(it)
+    } else {
+      println("${it.name.asString()} - SKIP")
+    }
+  }
 }
 
 
-fun generateCopyFunction(clazz: ClassDescriptor) {
+fun GeneratorParameters.generateCopyFunction(clazz: ClassDescriptor) {
   val className = ClassName(clazz.parents.firstIsInstance<KonanPackageFragment>().fqName.asString(), clazz.name.asString())
 
 
   val poet = FileSpec.builder(
           "org.jonnyzzz.cef.generated",
-          "generated.kt"
+          "copy_" + className.simpleName
   ).addFunction(
           FunSpec.builder(copyMethodName)
                   .addModifiers(KModifier.INLINE)
+                  .addAnnotation(AnnotationSpec.builder(Suppress::class)
+                          .addMember("%S", "NOTHING_TO_INLINE")
+                          .build()
+                  )
                   .addKdoc("Performs deep copy of all\n" +
                            "fields of the [target] structure\n" +
                            "into the receiver structure")
@@ -53,6 +67,5 @@ fun generateCopyFunction(clazz: ClassDescriptor) {
                   .build()
   ).build()
 
-  println(poet)
-
+  poet.writeTo(outputDir)
 }
