@@ -96,9 +96,7 @@ private fun visitModule(module: ModuleDescriptor) {
     println("${it.javaClass.simpleName}: $it")
   }
 
-  val cefAppT = descriptors.filterIsInstance<ClassDescriptor>().first { it.name.asString() == "_cef_app_t" }
-  println(cefAppT)
-  cefAppT.getMemberScope(TypeSubstitution.EMPTY).getContributedDescriptors().filter { it.shouldBePrinted }.forEach {
-    println("  ${it.javaClass.simpleName}: $it")
-  }
+  generateCopyFunctions(descriptors.filterIsInstance<ClassDescriptor>())
+
+
 }
