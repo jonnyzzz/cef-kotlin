@@ -13,7 +13,7 @@ setupCefConfigurations {
         executable {
 
           linkCefFramework()
-         
+
           entryPoint = "org.jonnyzzz.cef.example.main"
         }
       }

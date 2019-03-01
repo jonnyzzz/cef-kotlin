@@ -1,93 +1,110 @@
 package org.jonnyzzz.cef.gradle
 
-import org.gradle.api.DefaultTask
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.OutputFile
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.Project
+import org.gradle.api.tasks.Exec
+import org.gradle.api.tasks.Sync
+import org.gradle.kotlin.dsl.create
+import org.jetbrains.kotlin.gradle.plugin.mpp.Executable
+import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
 import java.io.File
 
+class ClientCefConfigurationsImpl(
+        val project: Project
+) : CefConfigurationsImpl(project), CefConfigurations {
+  override val cefProject by lazy { project.project(":deps-cef") }
 
-open class InfoPlistTask : DefaultTask() {
-  @Input var bundleIdentifier : String? = null
-  @Input var bundleName : String? = null
-  @Input var executableName : String? = null
-
-  @Input var icons : String? = null
-
-  @OutputFile
-  var targetFile : File? = null
-
-  interface Builder {
-    fun property(key: String, value: Boolean)
-    fun property(key: String, value: String)
-    fun property(key: String, vararg values: Pair<String,String>)
-
-    operator fun String.rem(value: Boolean) = property(this, value)
-    operator fun String.rem(value: String) = property(this, value)
-    operator fun String.rem(values: List<Pair<String,String>>) = property(this, *values.toTypedArray())
-
-  }
-
-  private fun buildInfo(b : Builder.() -> Unit) = buildString {
-    //TODO: use XML builder
-    appendln("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
-    appendln("<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">")
-    appendln("<plist version=\"1.0\">")
-    appendln("<dict>")
-
-    object:Builder {
-      override fun property(key: String, value: Boolean) {
-        appendln("<key>$key</key>")
-        if (value) {
-          appendln("<true/>")
-        } else {
-          appendln("<false/>")
-        }
-      }
-
-      override fun property(key: String, value: String) {
-        appendln("<key>$key</key>")
-        appendln("<string>$value</string>")
-      }
-
-      override fun property(key: String, vararg values: Pair<String,String>) {
-        appendln("<key>$key</key>")
-        appendln("<dict>")
-        for ((k,v) in values) {
-          appendln("  <key>$k</key>")
-          appendln("  <string>$v</string>")
-        }
-        appendln("</dict>")
-      }
-    }.b()
-
-
-    appendln("</dict>")
-    appendln("</plist>")
-    appendln()
-  }
-
-
-  @TaskAction
-  fun `action!`() {
-    val text = buildInfo {
-      "CFBundleDevelopmentRegion" % "English"
-      "CFBundleExecutable" % "${executableName!!}"
-      icons?.let {
-        "CFBundleIconFile" % it
-      }
-      "CFBundleIdentifier" % bundleIdentifier!!
-      "CFBundleInfoDictionaryVersion" % "6.0"
-      "CFBundleName" % bundleName!!
-      "CFBundlePackageType" % "APPL"
-      "CFBundleSignature" % "????"
-      "CFBundleVersion" % "1.0"
-      "LSEnvironment" % listOf( "MallocNanoZone" to "0" )
-      "LSMinimumSystemVersion" % "10.11.0"
-      "NSSupportsAutomaticGraphicsSwitching" % true
+  val Executable.cefBinariesDir
+    get() = when (buildType) {
+      NativeBuildType.DEBUG -> debugDir
+      NativeBuildType.RELEASE -> releaseDir
     }
 
-    (targetFile?:error("target file is not set")).writeText(text)
+  val Executable.cefBinariesConfiguration
+    get() = when (buildType) {
+      NativeBuildType.DEBUG -> cef_debug
+      NativeBuildType.RELEASE -> cef_release
+    }
+
+  val Executable.cefBinariesDirHack
+    get() = when {
+      os != OS.Mac -> cefBinariesDir
+      else -> when (buildType) {
+        NativeBuildType.DEBUG -> debugDirHack
+        NativeBuildType.RELEASE -> releaseDirHack
+      }
+    }
+
+  override fun Executable.linkCefFramework() {
+    //workaround for https://youtrack.jetbrains.com/issue/KT-29970
+    //we have to rename framework to omit spaces
+    linkerOpts.addAll(listOf(
+            "-F", "$cefBinariesDirHack",
+            "-framework", macOSFrameworkName)
+    )
+    linkTask.dependsOn(cefBinariesConfiguration)
+
+    setupBundle(this@ClientCefConfigurationsImpl, this@linkCefFramework)
   }
 }
 
+private fun setupBundle(cef: ClientCefConfigurationsImpl, executable: Executable) = cef.run {
+  project.run {
+    executable.run {
+      val bundleDir = File(outputDirectory.path + ".apps") / "$baseName.app"
+
+      val taskNameSuffix = "${buildType.name.toLowerCase().capitalize()}Bundle_$baseName"
+      val infoPlistFile = buildDir / "$taskNameSuffix.plist"
+
+      val generateInfoPlist = project.tasks.create<InfoPlistTask>("generate${taskNameSuffix}plist") {
+        targetFile = infoPlistFile
+
+        icons = "AAA"
+        bundleIdentifier = "org.jonnyzzz.cef.kotlin.sample"
+        bundleName = "CEF-Kotlin-Sample"
+        executableName = outputFile.name
+      }
+
+      val buildBundleTask = project.tasks.create<Sync>("build$taskNameSuffix") {
+        destinationDir = bundleDir
+
+        from(cefBinariesDir) {
+          into("Contents/Frameworks")
+        }
+
+        from(outputDirectory) {
+          into("Contents/MacOS")
+        }
+
+        into("Contents/Frameworks/${baseName}Helper.app") {
+          from(outputDirectory) {
+            into("Contents/MacOS")
+          }
+
+          from(infoPlistFile) {
+            into("Contents")
+            eachFile {
+              name = "Info.plist"
+            }
+          }
+        }
+
+        from(infoPlistFile) {
+          into("Contents")
+          eachFile {
+            name = "Info.plist"
+          }
+        }
+
+        dependsOn(generateInfoPlist)
+        dependsOn(cefBinariesConfiguration)
+        dependsOn(linkTask)
+        //TODO: include info.plist
+      }
+
+      project.tasks.create<Exec>("run$taskNameSuffix") {
+        dependsOn(buildBundleTask)
+        commandLine(bundleDir / "Contents" / "MacOS" / outputFile.name)
+      }
+    }
+  }
+}
