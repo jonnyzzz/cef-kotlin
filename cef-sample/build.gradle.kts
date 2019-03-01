@@ -12,11 +12,8 @@ setupCefConfigurations {
       binaries {
         executable {
 
-          linkerOpts.addAll(listOf(
-                  "-F", "${cefBinariesDir}",
-                  "-framework", macOSFrameworkName)
-          )
-
+          linkCefFramework()
+         
           entryPoint = "org.jonnyzzz.cef.example.main"
         }
       }

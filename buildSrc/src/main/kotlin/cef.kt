@@ -2,6 +2,8 @@ package org.jonnyzzz.cef.gradle
 
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
+import org.gradle.api.tasks.Sync
+import org.gradle.kotlin.dsl.create
 import org.gradle.kotlin.dsl.creating
 import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.getValue
@@ -11,9 +13,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
 import java.io.File
 import kotlin.reflect.full.memberProperties
 
-interface CefConfigurations {
-  val macOSFrameworkName get() = "ChromiumEmbeddedFramework"
-
+interface CefConfigurationsBase {
   val cef_include: Configuration
   val cef_debug: Configuration
   val cef_release: Configuration
@@ -21,16 +21,16 @@ interface CefConfigurations {
   val includeDir: File
   val releaseDir: File
   val debugDir: File
-
-  val Executable.cefBinariesDir
-    get() = when (buildType) {
-      NativeBuildType.DEBUG -> debugDir
-      NativeBuildType.RELEASE -> releaseDir
-    }
-
 }
 
-abstract class CefConfigurationsImpl(project: Project) : CefConfigurations {
+interface CefConfigurations : CefConfigurationsBase {
+
+  fun Executable.linkCefFramework()
+}
+
+abstract class CefConfigurationsImpl(project: Project) : CefConfigurationsBase {
+  val macOSFrameworkName get() = "ChromiumEmbeddedFramework"
+
   val os by lazy { OS.current }
   val osName by lazy { os.name.toLowerCase() }
 
@@ -51,8 +51,28 @@ abstract class CefConfigurationsImpl(project: Project) : CefConfigurations {
 }
 
 fun Project.setupCefConfigurations(action: CefConfigurations.() -> Unit) {
-  object : CefConfigurationsImpl(this) {
+  object : CefConfigurationsImpl(this), CefConfigurations {
     override val cefProject by lazy { project(":deps-cef") }
+
+    val Executable.cefBinariesDir
+      get() = when (buildType) {
+        NativeBuildType.DEBUG -> debugDir
+        NativeBuildType.RELEASE -> releaseDir
+      }
+
+    override fun Executable.linkCefFramework() {
+      linkerOpts.addAll(listOf(
+              "-F", "$cefBinariesDir",
+              "-framework", macOSFrameworkName)
+      )
+
+      val copyFrameworkTask = project.tasks.create<Sync>("deploy_cef_framework_${buildType.name.toLowerCase()}") {
+        from(cefBinariesDir)
+        into(outputDirectory / "Frameworks")
+      }
+
+      linkTask.dependsOn(copyFrameworkTask)
+    }
   }.also { config ->
     CefConfigurations::class.memberProperties.forEach {
       if (it.returnType == Configuration::class) {
