@@ -6,72 +6,70 @@ plugins {
   id("org.jetbrains.kotlin.multiplatform")
 }
 
-repositories {
-  mavenCentral()
-}
+setupCefConfigurations {
 
-val cefDefFile by lazy { buildDir / "cef.def" }
+  val cefDefFile by lazy { buildDir / "cef.def" }
 
-val generateCefDefMac by tasks.creating {
-  group = "interop"
+  val generateCEFDef by tasks.creating {
+    group = "interop"
 
-  inputs.file(buildFile)
-  inputs.file(project(":deps-cef").buildFile)
-  outputs.file(cefDefFile)
+    dependsOn(cef_include)
 
-  doLast {
-    val cefHeaders = (cefHomeMac / "include" / "capi").listFiles(FileFilter {
-      it.isFile && it.name.startsWith("cef_") && it.name.endsWith(".h")
-    })?.sorted()?.joinToString(" ") { it.relativeTo(cefHomeMac).path }
+    inputs.file(buildFile)
+    outputs.file(cefDefFile)
 
-    val def = Properties()
+    doLast {
+      println("CEF Includes: ${includeDir}")
+      val cefHeaders = (includeDir / "include" / "capi").listFiles(FileFilter {
+        it.isFile && it.name.startsWith("cef_") && it.name.endsWith(".h")
+      })?.sorted()?.joinToString(" ") { it.relativeTo(includeDir).path } ?: error("No files!")
 
-    def.setProperty("headers", cefHeaders)
-    // https://youtrack.jetbrains.com/issue/KT-29970
-    // def.setProperty("linkerOpts", "-F ${cefHomeMac / "Debug"} -framework Chromium\\ Embedded\\ Framework")
+      val def = Properties()
 
-    cefDefFile.printWriter().use { out ->
-      def.store(out, "generated from task $name from $buildFile")
+      def.setProperty("headers", cefHeaders)
 
-      out.println()
-      out.println()
+      cefDefFile.printWriter().use { out ->
+        def.store(out, "generated from task $name from $buildFile")
+
+        out.println()
+        out.println()
+      }
     }
   }
-}
 
 
-kotlin {
-  macosX64 {
-    val main by compilations
+  kotlin {
+    macosX64 {
+      val main by compilations
 
-    main.cinterops.create("kotlinCefInterop") {
-      defFile = cefDefFile
-      packageName = "org.jonnyzzz.cef.interop"
+      main.cinterops.create("kotlinCefInterop") {
+        defFile = cefDefFile
+        packageName = "org.jonnyzzz.cef.interop"
 
-      compilerOpts += "-I$cefHomeMac"
+        compilerOpts += "-I${includeDir}"
 
-      tasks.onEach {
-        //TODO: use getter for the task, when available
-        if (it.name == interopProcessingTaskName) {
-          it.dependsOn(generateCefDefMac)
+        setupInteropProcessingTask(project) {
+          dependsOn(cef_include)
+          dependsOn(generateCEFDef)
+        }
+      }
+    }
+
+    val atomicFuVersion = "0.12.1"
+
+    sourceSets {
+      val commonMain by getting {
+        dependencies {
+          implementation("org.jetbrains.kotlinx:atomicfu-common:$atomicFuVersion")
+        }
+      }
+
+      val macosX64Main by getting {
+        dependencies {
+          implementation("org.jetbrains.kotlinx:atomicfu-native:$atomicFuVersion")
         }
       }
     }
   }
 
-  val atomicFuVersion = "0.12.1"
-
-  sourceSets {
-    val commonMain by getting {
-      dependencies {
-        implementation("org.jetbrains.kotlinx:atomicfu-common:$atomicFuVersion")
-      }
-    }
-
-    val macosX64Main by getting {
-      dependencies {
-        implementation("org.jetbrains.kotlinx:atomicfu-native:$atomicFuVersion")
-      }
-    }
-  }
 }

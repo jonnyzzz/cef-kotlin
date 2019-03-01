@@ -1,45 +1,40 @@
-import org.jonnyzzz.cef.gradle.cefHomeMac
-import org.jonnyzzz.cef.gradle.div
+import org.jonnyzzz.cef.gradle.*
 
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
 }
 
-repositories {
-  mavenCentral()
-}
+setupCefConfigurations {
+  kotlin {
+    macosX64 {
+      compilations["main"].kotlinOptions.freeCompilerArgs = listOf("-Xverbose-phases=linker")
 
+      binaries {
+        executable {
 
-kotlin {
-  macosX64 {
-    binaries {
-      executable {
-        compilations["main"].kotlinOptions.freeCompilerArgs = listOf("-Xverbose-phases=linker")
-/*
-        linkerOpts.addAll(listOf(
-                "-F", "${cefHomeMac / "Debug"}",
-                "-framework", "\"Chromium Embedded Framework\"")
-        )
-*/
+          linkerOpts.addAll(listOf(
+                  "-F", "${cefBinariesDir}",
+                  "-framework", macOSFrameworkName)
+          )
 
-        entryPoint = "org.jonnyzzz.cef.example.main"
-      }
-    }
-  }
-
-  sourceSets {
-    val commonMain by getting {
-      dependencies {
-        implementation(kotlin("stdlib-common"))
-        implementation(project(":cef-mpp"))
+          entryPoint = "org.jonnyzzz.cef.example.main"
+        }
       }
     }
 
-    val macosX64Main by getting {
-      dependencies {
-        implementation(project(":cef-mpp"))
+    sourceSets {
+      val commonMain by getting {
+        dependencies {
+          implementation(kotlin("stdlib-common"))
+          implementation(project(":cef-mpp"))
+        }
+      }
+
+      val macosX64Main by getting {
+        dependencies {
+          implementation(project(":cef-mpp"))
+        }
       }
     }
   }
 }
-

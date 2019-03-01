@@ -8,32 +8,23 @@ plugins {
   id("de.undercouch.download")
 }
 
-val cefVersion = "3626.1883.g00e6af4"
-val cef_builds = mapOf(
-        OS.Linux to "http://opensource.spotify.com/cefbuilds/cef_binary_3.${cefVersion}_linux64.tar.bz2",
-        OS.Windows to "http://opensource.spotify.com/cefbuilds/cef_binary_3.${cefVersion}_windows64.tar.bz2",
-        OS.Mac to "http://opensource.spotify.com/cefbuilds/cef_binary_3.${cefVersion}_macosx64.tar.bz2"
-)
-
 val cefDownload by tasks.creating
 val cefUnpack by tasks.creating
 
-val cef_binaries_base by extra { File(buildDir, "cef_binaries_base") }
+setupCefConfigurationsProject {
+  val cef_version = "3626.1883.g00e6af4"
+  val url = when(os) {
+    OS.Linux -> "https://opensource.spotify.com/cefbuilds/cef_binary_3.${cef_version}_linux64.tar.bz2"
+    OS.Windows -> "https://opensource.spotify.com/cefbuilds/cef_binary_3.${cef_version}_windows64.tar.bz2"
+    OS.Mac -> "https://opensource.spotify.com/cefbuilds/cef_binary_3.${cef_version}_macosx64.tar.bz2"
+  }
 
-val cef_include by configurations.creating
-val cef_debug by configurations.creating
-val cef_release by configurations.creating
-
-cef_builds.filter{ it.key.isCurrent }.forEach { (os2, url) ->
-
-  val os = os2.name.toLowerCase()
+  val osName = os.name.toLowerCase()
   val cefArchiveName = url.split("/").last()
   val cefDest = File(cef_binaries_base, cefArchiveName)
-  val cefUnpackDir = File(cef_binaries_base, "cef_$os")
-  val cefBinariesDir = File(cef_binaries_base, "cef_${os}_binaries")
 
-  //TODO: download only one platform
-  val download = tasks.create<Download>(::cefDownload.name + "_$os") {
+//TODO: download only one platform
+  val download = tasks.create<Download>(::cefDownload.name + "_$osName") {
     cefDownload.dependsOn(this)
 
     src(url)
@@ -42,7 +33,7 @@ cef_builds.filter{ it.key.isCurrent }.forEach { (os2, url) ->
     overwrite(false)
   }
 
-  val unpack = tasks.create(::cefUnpack.name + "_$os") {
+  val unpackTask = tasks.create(::cefUnpack.name + "_$osName") {
     val markerFile = buildDir / "$name.completed"
 
     cefUnpack.dependsOn(this)
@@ -68,42 +59,43 @@ cef_builds.filter{ it.key.isCurrent }.forEach { (os2, url) ->
     }
   }
 
-  listOf(cef_include to "include",
-          cef_debug to "Debug",
-          cef_release to "Release").forEach { (configuration, mode) ->
+  artifacts.add(cef_include.name, includeDir) {
+    builtBy(unpackTask)
+  }
 
-    val (dir, task) = when {
-      os2 == OS.Mac && configuration !== cef_include -> {
-        //workaround for https://youtrack.jetbrains.com/issue/KT-29970
-        //we have to rename framework to omit spaces
+  listOf(cef_debug to "Debug" to debugDir,
+         cef_release to "Release" to releaseDir).forEach {
+    (tmp, targetDir) ->
 
-        val originalName = "Chromium Embedded Framework"
-        val newName = "ChromiumEmbeddedFramework"
+    val (configuration, mode) = tmp
 
-        val frameworkDir = cefUnpackDir / mode / "$originalName.framework"
-        val targetDir = cefBinariesDir / mode.toLowerCase() / "$newName.framework"
+    val task = if (os == OS.Mac) {
+      //workaround for https://youtrack.jetbrains.com/issue/KT-29970
+      //we have to rename framework to omit spaces
 
-        val prepareTask = tasks.create<Sync>(::cefUnpack.name + "_${os}_framework_${mode.toLowerCase()}") {
-          cefUnpack.dependsOn(this)
+      val originalName = "Chromium Embedded Framework"
+      val frameworkDir = cefUnpackDir / mode / "$originalName.framework"
+      val targetFrameworkDir = cefBinariesDir / mode.toLowerCase() / "$macOSFrameworkName.framework"
 
-          dependsOn(unpack)
-          from(frameworkDir)
-          into(targetDir)
-          includeEmptyDirs = false
-          eachFile {
-            this.name = this.name.replace(originalName, newName)
-          }
+      val prepareTask = tasks.create<Sync>(::cefUnpack.name + "_${osName}_framework_${mode.toLowerCase()}") {
+        cefUnpack.dependsOn(this)
+
+        dependsOn(unpackTask)
+        from(frameworkDir)
+        into(targetFrameworkDir)
+        includeEmptyDirs = false
+        eachFile {
+          name = name.replace(originalName, macOSFrameworkName)
         }
-
-        targetDir to prepareTask
       }
 
-      else -> cefUnpackDir / mode to unpack
+      prepareTask
+    } else {
+      unpackTask
     }
 
-    artifacts.add(configuration.name, dir) {
+    artifacts.add(configuration.name, targetDir) {
       builtBy(task)
     }
   }
 }
-
