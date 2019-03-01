@@ -2,6 +2,7 @@ package org.jonnyzzz.cef.gradle
 
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
+import org.gradle.api.tasks.Exec
 import org.gradle.api.tasks.Sync
 import org.gradle.kotlin.dsl.create
 import org.gradle.kotlin.dsl.creating
@@ -19,8 +20,6 @@ interface CefConfigurationsBase {
   val cef_release: Configuration
 
   val includeDir: File
-  val releaseDir: File
-  val debugDir: File
 }
 
 interface CefConfigurations : CefConfigurationsBase {
@@ -46,8 +45,12 @@ abstract class CefConfigurationsImpl(project: Project) : CefConfigurationsBase {
   val cefBinariesDir get() = File(cef_binaries_base, "cef_${osName}_binaries")
 
   override val includeDir by lazy { cefUnpackDir }
-  override val releaseDir by lazy { (if (os == OS.Mac) cefBinariesDir else cefUnpackDir) / "Release" }
-  override val debugDir by lazy { (if (os == OS.Mac) cefBinariesDir else cefUnpackDir) / "Debug" }
+
+  val releaseDir by lazy { cefUnpackDir / "Release" }
+  val debugDir by lazy { cefUnpackDir / "Debug" }
+
+  val releaseDirHack by lazy { cefBinariesDir / "Release" }
+  val debugDirHack by lazy { cefBinariesDir / "Debug" }
 }
 
 fun Project.setupCefConfigurations(action: CefConfigurations.() -> Unit) {
@@ -60,18 +63,71 @@ fun Project.setupCefConfigurations(action: CefConfigurations.() -> Unit) {
         NativeBuildType.RELEASE -> releaseDir
       }
 
-    override fun Executable.linkCefFramework() {
-      linkerOpts.addAll(listOf(
-              "-F", "$cefBinariesDir",
-              "-framework", macOSFrameworkName)
-      )
-
-      val copyFrameworkTask = project.tasks.create<Sync>("deploy_cef_framework_${buildType.name.toLowerCase()}") {
-        from(cefBinariesDir)
-        into(outputDirectory / "Frameworks")
+    val Executable.cefBinariesConfiguration
+      get() = when (buildType) {
+        NativeBuildType.DEBUG -> cef_debug
+        NativeBuildType.RELEASE -> cef_release
       }
 
-      linkTask.dependsOn(copyFrameworkTask)
+    val Executable.cefBinariesDirHack
+      get() = when {
+        os != OS.Mac -> cefBinariesDir
+        else -> when (buildType) {
+          NativeBuildType.DEBUG -> debugDirHack
+          NativeBuildType.RELEASE -> releaseDirHack
+        }
+      }
+
+    override fun Executable.linkCefFramework() {
+      //workaround for https://youtrack.jetbrains.com/issue/KT-29970
+      //we have to rename framework to omit spaces
+      linkerOpts.addAll(listOf(
+              "-F", "$cefBinariesDirHack",
+              "-framework", macOSFrameworkName)
+      )
+      linkTask.dependsOn(cefBinariesConfiguration)
+      val bundleDir = File(outputDirectory.path  + ".app")
+
+      val taskNameSuffix = "${buildType.name.toLowerCase().capitalize()}Bundle_$baseName"
+      val infoPlistFile = buildDir / "$taskNameSuffix.plist"
+
+      val generateInfoPlist = project.tasks.create<InfoPlistTask>("generate${taskNameSuffix}plist") {
+        targetFile = infoPlistFile
+
+        icons = "AAA"
+        bundleIdentifier = "org.jonnyzzz.cef.kotlin.sample"
+        bundleName = "CEF-Kotlin-Sample"
+        executableName = outputFile.name
+      }
+
+      val buildBundleTask = project.tasks.create<Sync>("build$taskNameSuffix") {
+        destinationDir = bundleDir
+
+        from(cefBinariesDir){
+          into("Contents/Frameworks")
+        }
+
+        from(outputDirectory) {
+          into("Contents/MacOS")
+        }
+
+        from(infoPlistFile) {
+          into("Contents")
+          eachFile {
+            name = "Info.plist"
+          }
+        }
+
+        dependsOn(generateInfoPlist)
+        dependsOn(cefBinariesConfiguration)
+        dependsOn(linkTask)
+        //TODO: include info.plist
+      }
+
+      project.tasks.create<Exec>("run$taskNameSuffix") {
+        dependsOn(buildBundleTask)
+        commandLine(bundleDir / "Contents" / "MacOS" / outputFile.name )
+      }
     }
   }.also { config ->
     CefConfigurations::class.memberProperties.forEach {

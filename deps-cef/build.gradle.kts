@@ -1,7 +1,9 @@
-@file:Suppress("PropertyName")
+@file:Suppress("PropertyName", "LocalVariableName")
 
 import de.undercouch.gradle.tasks.download.Download
-import org.jonnyzzz.cef.gradle.*
+import org.jonnyzzz.cef.gradle.OS
+import org.jonnyzzz.cef.gradle.div
+import org.jonnyzzz.cef.gradle.setupCefConfigurationsProject
 import java.util.*
 
 plugins {
@@ -13,7 +15,7 @@ val cefUnpack by tasks.creating
 
 setupCefConfigurationsProject {
   val cef_version = "3626.1883.g00e6af4"
-  val url = when(os) {
+  val url = when (os) {
     OS.Linux -> "https://opensource.spotify.com/cefbuilds/cef_binary_3.${cef_version}_linux64.tar.bz2"
     OS.Windows -> "https://opensource.spotify.com/cefbuilds/cef_binary_3.${cef_version}_windows64.tar.bz2"
     OS.Mac -> "https://opensource.spotify.com/cefbuilds/cef_binary_3.${cef_version}_macosx64.tar.bz2"
@@ -59,17 +61,16 @@ setupCefConfigurationsProject {
     }
   }
 
-  artifacts.add(cef_include.name, includeDir) {
-    builtBy(unpackTask)
-  }
+  artifacts.add(cef_include.name, includeDir) { builtBy(unpackTask) }
+  artifacts.add(cef_debug.name, debugDir) { builtBy(unpackTask) }
+  artifacts.add(cef_release.name, releaseDir) { builtBy(unpackTask) }
 
-  listOf(cef_debug to "Debug" to debugDir,
-         cef_release to "Release" to releaseDir).forEach {
-    (tmp, targetDir) ->
+  if (os == OS.Mac) {
+    listOf(cef_debug to "Debug" to debugDir,
+            cef_release to "Release" to releaseDir).forEach { (tmp, targetDir) ->
 
-    val (configuration, mode) = tmp
+      val (configuration, mode) = tmp
 
-    val task = if (os == OS.Mac) {
       //workaround for https://youtrack.jetbrains.com/issue/KT-29970
       //we have to rename framework to omit spaces
 
@@ -89,13 +90,7 @@ setupCefConfigurationsProject {
         }
       }
 
-      prepareTask
-    } else {
-      unpackTask
-    }
-
-    artifacts.add(configuration.name, targetDir) {
-      builtBy(task)
+      artifacts.add(configuration.name, targetDir) { builtBy(prepareTask) }
     }
   }
 }
