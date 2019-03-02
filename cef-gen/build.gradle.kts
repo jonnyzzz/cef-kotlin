@@ -28,8 +28,7 @@ dependencies {
   implementation("org.jetbrains.kotlin:kotlin-native-library-reader:$kotlinVersion")
   implementation("org.jetbrains.kotlin:kotlin-compiler:$kotlinVersion")
   implementation("org.jetbrains.kotlin:kotlin-native-utils:$kotlinVersion")
-  
-  implementation("com.squareup:kotlinpoet:1.0.1")
+  implementation("com.squareup:kotlinpoet:1.1.0")
 }
 
 configure<ApplicationPluginConvention> {
