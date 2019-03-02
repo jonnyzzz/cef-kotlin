@@ -2,6 +2,7 @@ package org.jonnyzzz.cef.generator
 
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.ParameterizedTypeName
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.WildcardTypeName
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -9,12 +10,18 @@ import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
 import org.jetbrains.kotlin.resolve.descriptorUtil.parents
 import org.jetbrains.kotlin.serialization.konan.KonanPackageFragment
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.TypeProjection
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.isNullable
 
 
 val cefInteropPackage = "org.jonnyzzz.cef.interop"
 val cefGeneratedPackage = "org.jonnyzzz.cef.generated"
+
+val cefString16 = ClassName(cefInteropPackage, "_cef_string_utf16_t")
+val cefBaseRefCounted = ClassName(cefInteropPackage, "_cef_base_ref_counted_t")
+
+val kotlinString = ClassName.bestGuess("String")
 
 val memberScopeType = ClassName.bestGuess("kotlinx.cinterop.MemScope")
 val cValueType = ClassName.bestGuess("kotlinx.cinterop.CValue")
@@ -25,6 +32,10 @@ fun ClassifierDescriptor.toClassName(): ClassName = when(val firstParent = paren
   is KonanPackageFragment -> ClassName(firstParent.fqName.asString(), name.asString())
   else -> error("Unsupported type $javaClass: $this")
 }
+
+fun TypeProjection.toTypeName() = type.toTypeName()
+
+fun ClassName.asNullableCPointer() = cPointerType.parameterizedBy(this).copy(nullable = true)
 
 fun KotlinType.toTypeName(): TypeName {
   val rawType = constructor.declarationDescriptor!!.toClassName().copy(isNullable())

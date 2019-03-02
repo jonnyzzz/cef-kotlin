@@ -106,6 +106,7 @@ private fun GeneratorParameters.visitModule(module: ModuleDescriptor) {
   generateCopyFunctions(descriptors.filterIsInstance<ClassDescriptor>())
   generateValFunctions(descriptors.filterIsInstance<PropertyDescriptor>())
   generateTypes(descriptors.filterIsInstance<ClassDescriptor>())
+  generateTypes2(descriptors.filterIsInstance<ClassDescriptor>())
 }
 
 

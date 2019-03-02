@@ -32,6 +32,10 @@ data class CefTypeInfo(
 ) {
   val cleanName = rawStruct.simpleName.removePrefix("_").removePrefix("cef").removeSuffix("_t")
   val typeName = "Cef" + cleanName.split("_").joinToString("") { it.capitalize() }
+
+  val kInterfaceName = "K$typeName"
+  val kInterfaceTypeName = ClassName(cefGeneratedPackage, kInterfaceName)
+
   val pointedName = "pointed_$cleanName"
 
   val typeClassName = ClassName(cefGeneratedPackage, typeName)
@@ -45,6 +49,16 @@ data class CefTypeInfo(
   }
 }
 
+
+val ClassDescriptor.isCefBased: Boolean
+  get() {
+    return getMemberScope(TypeSubstitution.EMPTY).getContributedDescriptors()
+            .filter { it.shouldBePrinted }
+            .filterIsInstance<PropertyDescriptor>()
+            .firstOrNull { it.name.asString() == "base" }?.let {
+              it.returnType?.toTypeName() == cefBaseRefCounted
+            } ?: false
+  }
 
 fun GeneratorParameters.generateType(clazz: ClassDescriptor,
                                      copyFromTypes: Set<KotlinType>) : Unit = CefTypeInfo(clazz).run {
@@ -71,18 +85,8 @@ fun GeneratorParameters.generateType(clazz: ClassDescriptor,
           .build())
 */
 
-
-  val cefBase = ClassName(cefInteropPackage, "_cef_base_ref_counted_t")
-  val isCefBased = clazz.getMemberScope(TypeSubstitution.EMPTY).getContributedDescriptors()
-          .filter { it.shouldBePrinted }
-          .filterIsInstance<PropertyDescriptor>()
-          .firstOrNull { it.name.asString() == "base" }?.let {
-            it.returnType?.toTypeName() == cefBase
-          } ?: false
-
-
-  if (isCefBased) {
-    val cefBaseInfo = CefTypeInfo(cefBase)
+  if (clazz.isCefBased) {
+    val cefBaseInfo = CefTypeInfo(cefBaseRefCounted)
     type.addSuperinterface(cefBaseInfo.typeClassName)
 
     type.addProperty(PropertySpec
@@ -156,7 +160,7 @@ fun GeneratorParameters.generateType(clazz: ClassDescriptor,
               first() + drop(1).joinToString("") { it.capitalize() }
             }
 
-            val function = detectFunction(p, propName)
+            val function = detectFunctionProperty(p, propName)
             if (function != null) {
               val (funcSpec, params, returnType) = function
               when {
