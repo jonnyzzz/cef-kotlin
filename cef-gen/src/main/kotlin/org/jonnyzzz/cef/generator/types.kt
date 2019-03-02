@@ -30,11 +30,9 @@ fun GeneratorParameters.generateTypes(clazzez: List<ClassDescriptor>,
 
 fun GeneratorParameters.generateType(clazz: ClassDescriptor,
                                      copyFromTypes: Set<KotlinType>) {
-  if (clazz.name.asString() != "_cef_settings_t") return
-
   println("Generate Typed Wrapper for $clazz")
 
-  val typeName = "CefSettings"
+  val typeName = "Cef" + clazz.name.asString().removePrefix("_").removePrefix("cef").removeSuffix("_t").split("_").joinToString("") { it.capitalize() }
 
   val poet = FileSpec.builder(
           "org.jonnyzzz.cef.generated",
@@ -52,7 +50,7 @@ fun GeneratorParameters.generateType(clazz: ClassDescriptor,
   clazz.getMemberScope(TypeSubstitution.EMPTY).getContributedDescriptors()
           .filter { it.shouldBePrinted }
           .filterIsInstance<PropertyDescriptor>()
-          .firstOrNull { it.name.asString() == "size"}?.let {
+          .firstOrNull { it.name.asString() == "size" }?.let {
 
             cValueInit.addStatement("size = %T.size.convert()", clazz.toClassName())
 
@@ -70,10 +68,10 @@ fun GeneratorParameters.generateType(clazz: ClassDescriptor,
 
   type.addProperty(
           PropertySpec
-                  .builder("struct",structType, KModifier.PRIVATE)
+                  .builder("struct", structType, KModifier.PRIVATE)
                   .initializer(cValueInit.endControlFlow().build())
                   .build()
-          )
+  )
 
   type.addProperty(PropertySpec.builder("ptr", structRefType).receiver(memberScope).getter(
           FunSpec.getterBuilder().addStatement("return struct.ptr").build()).build())
@@ -84,21 +82,23 @@ fun GeneratorParameters.generateType(clazz: ClassDescriptor,
           .filter { it.shouldBePrinted }
           .filterIsInstance<PropertyDescriptor>()
           .filter { it.name.asString() != "size" }
-          .forEach {
-            println("property: ${it.name} : ${it.type}")
+          .forEach { p ->
+            println("property: ${p.name} : ${p.type}")
+            val name = p.name.asString()
+            val propName: String = name.split("_").run {
+              first() + drop(1).joinToString("") { it.capitalize() }
+            }
 
-            val name = it.name.asString()
-
-            val prop = if (it.type.toTypeName() == ClassName("org.jonnyzzz.cef.interop", "_cef_string_utf16_t")) {
-              val prop = PropertySpec.builder(name, String::class).mutable(true)
+            val prop = if (p.type.toTypeName() == ClassName("org.jonnyzzz.cef.interop", "_cef_string_utf16_t")) {
+              val prop = PropertySpec.builder(propName, String::class).mutable(true)
               prop.getter(FunSpec.getterBuilder().addStatement("return struct.useContents{ $name.asString() }").build())
-              prop.setter(FunSpec.setterBuilder().addParameter("value", it.type.toTypeName()).addStatement("struct.useContents{ $name.copyFrom(value) }").build())
+              prop.setter(FunSpec.setterBuilder().addParameter("value", p.type.toTypeName()).addStatement("struct.useContents{ $name.copyFrom(value) }").build())
             } else {
-              val prop = PropertySpec.builder(name, it.type.toTypeName()).mutable(true)
+              val prop = PropertySpec.builder(propName, p.type.toTypeName()).mutable(true)
               prop.getter(FunSpec.getterBuilder().addStatement("return struct.useContents{ $name }").build())
-              val setter = FunSpec.setterBuilder().addParameter("value", it.type.toTypeName())
+              val setter = FunSpec.setterBuilder().addParameter("value", p.type.toTypeName())
               setter.beginControlFlow("struct.useContents{ ")
-              if (it.returnType in copyFromTypes) {
+              if (p.returnType in copyFromTypes) {
                 setter.addStatement("$name.copyFrom(value)")
               } else {
                 setter.addStatement("$name = value")
