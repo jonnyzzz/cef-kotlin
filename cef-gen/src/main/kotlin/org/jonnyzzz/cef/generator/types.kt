@@ -2,7 +2,6 @@ package org.jonnyzzz.cef.generator
 
 import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
@@ -18,12 +17,10 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeSubstitution
 
 
-fun GeneratorParameters.generateTypes(clazzez: List<ClassDescriptor>,
-                                      copyFromTypes: Set<KotlinType>) {
+fun GeneratorParameters.generateTypes(clazzez: List<ClassDescriptor>) {
   clazzez.forEach {
     if (it.name.asString() != "sched_param" && it.getSuperClassNotAny()?.classId == ClassId.fromString("kotlinx/cinterop/CStructVar")) {
       generateType(it, copyFromTypes)
-    } else {
     }
   }
 }
@@ -33,7 +30,9 @@ fun GeneratorParameters.generateType(clazz: ClassDescriptor,
                                      copyFromTypes: Set<KotlinType>) {
   println("Generate Typed Wrapper for $clazz")
 
-  val typeName = "Cef" + clazz.name.asString().removePrefix("_").removePrefix("cef").removeSuffix("_t").split("_").joinToString("") { it.capitalize() }
+  val cleanName = clazz.name.asString().removePrefix("_").removePrefix("cef").removeSuffix("_t")
+  val typeName = "Cef" + cleanName.split("_").joinToString("") { it.capitalize() }
+  val pointedName = "pointed_$cleanName"
 
   val rawStruct = clazz.toClassName()
 
@@ -50,27 +49,30 @@ fun GeneratorParameters.generateType(clazz: ClassDescriptor,
           "org.jonnyzzz.cef.generated",
           typeName
   )
-          .addImport("kotlinx.cinterop", "cValue", "convert", "useContents", "memberAt", "ptr", "reinterpret", "invoke")
+          .addImport("kotlinx.cinterop", "cValue", "convert", "useContents", "memberAt", "ptr", "reinterpret", "invoke", "pointed")
           .addImport("org.jonnyzzz.cef", "value", "asString", "copyFrom")
           .addImport("org.jonnyzzz.cef.generated", "copyFrom")
           .addAnnotation(AnnotationSpec.builder(Suppress::class).addMember("%S", "unused").build())
 
   val type = TypeSpec.classBuilder(typeName)
           .addAnnotation(ClassName("kotlin", "ExperimentalUnsignedTypes"))
-          .primaryConstructor(FunSpec.constructorBuilder()
-                  .addParameter("struct", structType)
-                  .build())
-          .addProperty(PropertySpec.builder("struct", structType)
-                  .initializer("struct")
-                  .build())
+          .addModifiers(KModifier.ABSTRACT)
 
+  /*
+  .primaryConstructor(FunSpec.constructorBuilder()
+          .addParameter("struct", structType)
+          .build())
+  .addProperty(PropertySpec.builder("struct", structType)
+          .initializer("struct")
+          .build())
+*/
 
   val isCefBased =
           clazz.getMemberScope(TypeSubstitution.EMPTY).getContributedDescriptors()
                   .filter { it.shouldBePrinted }
                   .filterIsInstance<PropertyDescriptor>()
                   .firstOrNull { it.name.asString() == "base" }?.let {
-                    it.returnType?.toTypeName() == ClassName("org.jonnyzzz.cef.interop", "_cef_base_ref_counted_t")
+                    it.returnType?.toTypeName() == ClassName(cefInteropPackage, "_cef_base_ref_counted_t")
                   } ?: false
 /*
   val (rawStruct, accessor) = if (isCefBased) {
@@ -91,12 +93,10 @@ fun GeneratorParameters.generateType(clazz: ClassDescriptor,
   } else {
     clazz.toClassName() to ""
   }
-*/
 
   val cValueInit = CodeBlock.builder()
           .beginControlFlow("cValue")
 
-  /*
   //does not work for _cef_cursor_info_t
 
   clazz.getMemberScope(TypeSubstitution.EMPTY).getContributedDescriptors()
@@ -107,6 +107,7 @@ fun GeneratorParameters.generateType(clazz: ClassDescriptor,
           }
    */
 
+/*
 
   type.addProperty(
           PropertySpec
@@ -115,9 +116,15 @@ fun GeneratorParameters.generateType(clazz: ClassDescriptor,
                   .build()
   )
 
-  type.addProperty(PropertySpec.builder("ptr", structRefType).receiver(memberScopeType).getter(
+  type.addProperty(
+          PropertySpec.builder("ptr", structRefType).receiver(memberScopeType).getter(
           FunSpec.getterBuilder().addStatement("return struct.ptr.reinterpret()").build()).build())
 
+*/
+
+  type.addProperty(
+          PropertySpec.builder(pointedName, rawStruct, KModifier.ABSTRACT).build()
+  )
 
   clazz.getMemberScope(TypeSubstitution.EMPTY).getContributedDescriptors()
           .filter { it.shouldBePrinted }
@@ -132,51 +139,47 @@ fun GeneratorParameters.generateType(clazz: ClassDescriptor,
 
             val function = detectFunction(p, propName)
             if (function != null) {
-              val (funcSpec, params) = function
-
-              type.addModifiers(KModifier.OPEN)
+              val (funcSpec, params, returnType) = function
               funcSpec.addModifiers(KModifier.OPEN)
 
-              funcSpec.beginControlFlow("return struct.useContents{")
-              funcSpec.addStatement("$name!!.invoke(${params.joinToString(", ") { it.first }})")
-              funcSpec.endControlFlow()
+              when {
+                returnType in enumTypes -> funcSpec.addStatement("TODO(%S)", "cinterop does not support enum C function return types (e.g. in 1.3.21)")
+                returnType is ParameterizedTypeName && returnType.rawType == ClassName("kotlinx.cinterop", "CValue") -> funcSpec.addStatement("TODO(%S)", "cinterop does not support CValue<*> C function return types (e.g. in 1.3.21)")
+                else -> funcSpec.addStatement("return $pointedName.$name!!.invoke(${params.joinToString(", ") { it.paramName }})")
+              }
 
               type.addFunction(funcSpec.build())
               return@forEach
             }
 
-            if (p.type.toTypeName() == ClassName("org.jonnyzzz.cef.interop", "_cef_string_utf16_t")) {
+            if (p.type.toTypeName() == ClassName(cefInteropPackage, "_cef_string_utf16_t")) {
               val prop = PropertySpec.builder(propName, String::class).mutable(true)
               prop.getter(FunSpec.getterBuilder()
-                      .beginControlFlow("return struct.useContents")
-                      .addStatement("$name.asString()")
-                      .endControlFlow()
+                      .addStatement("return $pointedName.$name.asString()")
                       .build()
-                      )
+              )
               prop.setter(FunSpec.setterBuilder()
                       .addParameter("value", p.type.toTypeName())
-                      .beginControlFlow("struct.useContents")
-                      .addStatement("$name.copyFrom(value)")
-                      .endControlFlow()
+                      .addStatement("$pointedName.$name.copyFrom(value)")
                       .build())
+
+              type.addProperty(prop.build())
               return@forEach
             }
 
             val prop = PropertySpec.builder(propName, p.type.toTypeName()).mutable(true)
             prop.getter(FunSpec.getterBuilder()
-                    .beginControlFlow("return struct.useContents")
-                    .addStatement(name)
-                    .endControlFlow()
+                    .addStatement("return $pointedName.$name")
                     .build()
             )
             val setter = FunSpec.setterBuilder().addParameter("value", p.type.toTypeName())
-            setter.beginControlFlow("struct.useContents")
-            if (p.returnType in copyFromTypes) {
-              setter.addStatement("$name.copyFrom(value)")
-            } else {
-              setter.addStatement("$name = value")
+            when {
+              p.returnType in copyFromTypes ->
+                setter.addStatement("$pointedName.$name.copyFrom(value)")
+
+              else ->
+                setter.addStatement("$pointedName.$name = value")
             }
-            setter.endControlFlow()
             prop.setter(setter.build())
             type.addProperty(prop.build())
           }

@@ -1,6 +1,5 @@
 package org.jonnyzzz.cef.generator
 
-import com.squareup.kotlinpoet.FileSpec
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
@@ -12,6 +11,8 @@ import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.konan.util.KonanFactories.DefaultDeserializedDescriptorFactory
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
+import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperInterfaces
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import java.io.File
 import java.util.*
@@ -30,10 +31,6 @@ fun main(args: Array<String>) {
 }
 
 operator fun File.div(s: String) = File(this, s)
-
-data class GeneratorParameters(val outputDir: File) {
-  fun FileSpec.writeTo() = writeTo(outputDir)
-}
 
 private fun mainImpl(args: Array<String>) {
   println("Kotlin CEF API generator.")
@@ -105,7 +102,15 @@ private fun GeneratorParameters.visitModule(module: ModuleDescriptor) {
 
   println("------------\n\n\n")
 
-  val copyFromTypes = generateCopyFunctions(descriptors.filterIsInstance<ClassDescriptor>())
+  collectAllEnums(descriptors.filterIsInstance<ClassDescriptor>())
+  generateCopyFunctions(descriptors.filterIsInstance<ClassDescriptor>())
   generateValFunctions(descriptors.filterIsInstance<PropertyDescriptor>())
-  generateTypes(descriptors.filterIsInstance<ClassDescriptor>(), copyFromTypes)
+  generateTypes(descriptors.filterIsInstance<ClassDescriptor>())
+}
+
+
+private fun GeneratorParameters.collectAllEnums(classes: List<ClassDescriptor>) {
+  enumTypes = classes.filter { clazz ->
+    clazz.getSuperInterfaces().any { it.fqNameSafe.asString() == "kotlinx.cinterop.CEnum" }
+  }.map { it.toClassName() }.toSet()
 }

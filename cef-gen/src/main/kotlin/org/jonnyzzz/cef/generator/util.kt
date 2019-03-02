@@ -12,6 +12,9 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.isNullable
 
+
+val cefInteropPackage = "org.jonnyzzz.cef.interop"
+
 val memberScopeType = ClassName.bestGuess("kotlinx.cinterop.MemScope")
 val cValueType = ClassName.bestGuess("kotlinx.cinterop.CValue")
 val cPointerType = ClassName.bestGuess("kotlinx.cinterop.CPointer")

@@ -22,7 +22,18 @@ fun GeneratorParameters.generateValFunctions(props: List<PropertyDescriptor>) {
   poet.build().writeTo(outputDir)
 }
 
-fun detectFunction(prop: PropertyDescriptor, funName: String) : Pair<FunSpec.Builder, List<Pair<String, TypeName>>>? {
+data class DetectedFunctionParam(
+        val paramName: String,
+        val paramType: TypeName
+)
+
+data class DetectedFunction(
+        val funcDeclaration: FunSpec.Builder,
+        val params: List<DetectedFunctionParam>,
+        val returnType: TypeName
+)
+
+fun detectFunction(prop: PropertyDescriptor, funName: String): DetectedFunction? {
   val returnType = prop.returnType as? SimpleType
   if (returnType == null) {
     println("PROP: ${prop.name}  ${prop.returnType?.javaClass}: ${prop.returnType}  - Unknown Return Type")
@@ -44,20 +55,20 @@ fun detectFunction(prop: PropertyDescriptor, funName: String) : Pair<FunSpec.Bui
 
   val fSpec = FunSpec.builder(funName)
 
-  val fReturnType = funType.type.arguments.last()
-  val fParams = funType.type.arguments.dropLast(1).mapIndexed { idx, it -> "p_$idx" to it.type.toTypeName() }
+  val fReturnType = funType.type.arguments.last().type.toTypeName()
+  val fParams = funType.type.arguments.dropLast(1).mapIndexed { idx, it -> DetectedFunctionParam("p_$idx", it.type.toTypeName()) }
 
-  fParams.forEach{ (idx, it) ->
-    fSpec.addParameter(idx, it)
+  fParams.forEach {
+    fSpec.addParameter(it.paramName, it.paramType)
   }
 
-  fSpec.returns(fReturnType.type.toTypeName())
-  return fSpec to fParams
+  fSpec.returns(fReturnType)
+  return DetectedFunction(fSpec, fParams, fReturnType)
 }
 
 private fun generateValFunctionsPointer(prop: PropertyDescriptor, poet: FileSpec.Builder) {
   val (fSpec, fParams) = detectFunction(prop, "safe_" + prop.name) ?: return
-  fSpec.addStatement("return (${prop.fqNameSafe.asString()}!!)(${fParams.joinToString(", ") { (idx, _) -> idx }})")
+  fSpec.addStatement("return (${prop.fqNameSafe.asString()}!!)(${fParams.joinToString(", ") { it.paramName }})")
   fSpec.addAnnotation(ClassName("kotlin", "ExperimentalUnsignedTypes"))
 
   println("${prop.name}  ${prop.returnType?.javaClass}: ${prop.returnType}")

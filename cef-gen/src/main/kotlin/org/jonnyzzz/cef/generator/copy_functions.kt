@@ -16,10 +16,8 @@ import org.jetbrains.kotlin.types.TypeSubstitution
 
 private const val copyMethodName = "copyFrom"
 
-
-fun GeneratorParameters.generateCopyFunctions(clazzez: List<ClassDescriptor>): Set<KotlinType> {
-  return clazzez.mapNotNull {
-
+fun GeneratorParameters.generateCopyFunctions(clazzez: List<ClassDescriptor>) {
+  copyFromTypes = clazzez.mapNotNull {
     if (it.name.asString() != "sched_param" && it.getSuperClassNotAny()?.classId == ClassId.fromString("kotlinx/cinterop/CStructVar")) {
       println("${it.name.asString()} - generate")
       generateCopyFunction(it)
