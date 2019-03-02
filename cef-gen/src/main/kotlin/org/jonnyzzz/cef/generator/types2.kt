@@ -5,6 +5,7 @@ import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
@@ -14,7 +15,7 @@ import org.jetbrains.kotlin.types.TypeSubstitution
 fun GeneratorParameters.generateTypes2(clazzez: List<ClassDescriptor>) {
   clazzez.forEach {
 
-    if (it.name.asString() in setOf("_cef_base_ref_counted_t", "_cef_app_t"/*, "_cef_settings_t"*/)) {
+    if (it.name.asString() in setOf("_cef_base_ref_counted_t", "_cef_app_t", "_cef_before_download_callback_t"/*, "_cef_settings_t"*/)) {
       generateType2(it)
     }
 
@@ -24,6 +25,25 @@ fun GeneratorParameters.generateTypes2(clazzez: List<ClassDescriptor>) {
   }
 }
 
+private fun GeneratorParameters.generateStructWrapper(poet : FileSpec.Builder,
+                                                      info: CefTypeInfo) : TypeSpec.Builder = info.run {
+
+  TypeSpec.classBuilder(kStructTypeName)
+          .addModifiers(KModifier.PRIVATE)
+          .primaryConstructor(FunSpec.constructorBuilder().addParameter("rawPtr", ClassName("kotlinx.cinterop", "NativePtr")).build())
+          .superclass(ClassName("kotlinx.cinterop", "CStructVar"))
+          .addSuperclassConstructorParameter("rawPtr")
+          .addType(TypeSpec.companionObjectBuilder()
+                  .superclass(ClassName("kotlinx.cinterop", "CStructVar.Type"))
+                  .addSuperclassConstructorParameter("%T.size + 8, %T.align", rawStruct, rawStruct).build())
+
+          .addProperty(
+                  PropertySpec
+                          .builder("cef", rawStruct)
+                          .getter(FunSpec.getterBuilder().addStatement("return memberAt(0)").build())
+                  .build()
+          )
+}
 
 private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = CefTypeInfo(clazz).run {
   val poet = FileSpec.builder(
@@ -35,8 +55,10 @@ private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = Ce
           .addImport("org.jonnyzzz.cef.generated", "copyFrom")
           .addAnnotation(AnnotationSpec.builder(Suppress::class).addMember("%S", "unused").build())
 
-  val type = TypeSpec.interfaceBuilder(kInterfaceName)
+  val kInterface = TypeSpec.interfaceBuilder(kInterfaceName)
           .addAnnotation(ClassName("kotlin", "ExperimentalUnsignedTypes"))
+
+  val kStructWrapper = generateStructWrapper(poet, this)
 
   //do we really need that base interface explicitly?
   /*
@@ -76,13 +98,14 @@ private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = Ce
 
               fSpec.returns(fReturnType)
               fSpec.addModifiers(KModifier.ABSTRACT)
-              type.addFunction(fSpec.build())
+              kInterface.addFunction(fSpec.build())
               return@forEach
             }
             TODO("UNSUPPORTED property ${p.javaClass} : $p")
           }
 
-  poet.addType(type.build())
+  poet.addType(kInterface.build())
+  poet.addType(kStructWrapper.build())
 
   poet.build().writeTo()
 }
