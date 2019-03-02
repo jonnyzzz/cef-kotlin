@@ -35,17 +35,34 @@ fun GeneratorParameters.generateType(clazz: ClassDescriptor,
 
   val typeName = "Cef" + clazz.name.asString().removePrefix("_").removePrefix("cef").removeSuffix("_t").split("_").joinToString("") { it.capitalize() }
 
+  val rawStruct = clazz.toClassName()
+
+  val structType = ParameterizedTypeName.run {
+    cValueType.parameterizedBy(rawStruct)
+  }
+
+  val structRefType = ParameterizedTypeName.run {
+    cPointerType.parameterizedBy(clazz.toClassName())
+  }
+
+
   val poet = FileSpec.builder(
           "org.jonnyzzz.cef.generated",
           typeName
   )
-          .addImport("kotlinx.cinterop", "cValue", "convert", "useContents", "memberAt", "ptr", "reinterpret")
+          .addImport("kotlinx.cinterop", "cValue", "convert", "useContents", "memberAt", "ptr", "reinterpret", "invoke")
           .addImport("org.jonnyzzz.cef", "value", "asString", "copyFrom")
           .addImport("org.jonnyzzz.cef.generated", "copyFrom")
           .addAnnotation(AnnotationSpec.builder(Suppress::class).addMember("%S", "unused").build())
 
   val type = TypeSpec.classBuilder(typeName)
           .addAnnotation(ClassName("kotlin", "ExperimentalUnsignedTypes"))
+          .primaryConstructor(FunSpec.constructorBuilder()
+                  .addParameter("struct", structType)
+                  .build())
+          .addProperty(PropertySpec.builder("struct", structType)
+                  .initializer("struct")
+                  .build())
 
 
   val isCefBased =
@@ -55,7 +72,7 @@ fun GeneratorParameters.generateType(clazz: ClassDescriptor,
                   .firstOrNull { it.name.asString() == "base" }?.let {
                     it.returnType?.toTypeName() == ClassName("org.jonnyzzz.cef.interop", "_cef_base_ref_counted_t")
                   } ?: false
-
+/*
   val (rawStruct, accessor) = if (isCefBased) {
     val companion = TypeSpec.companionObjectBuilder()
             .superclass(ClassName("kotlinx.cinterop", "CStructVar.Type"))
@@ -70,10 +87,11 @@ fun GeneratorParameters.generateType(clazz: ClassDescriptor,
     struct.addProperty(PropertySpec.builder("cef", clazz.toClassName()).getter(FunSpec.getterBuilder().addStatement("return memberAt(0)").build()).build())
 
     poet.addType(struct.build())
-    ClassName.bestGuess(struct.build().name!!) to  "cef."
+    ClassName.bestGuess(struct.build().name!!) to "cef."
   } else {
     clazz.toClassName() to ""
   }
+*/
 
   val cValueInit = CodeBlock.builder()
           .beginControlFlow("cValue")
@@ -89,13 +107,6 @@ fun GeneratorParameters.generateType(clazz: ClassDescriptor,
           }
    */
 
-  val structType = ParameterizedTypeName.run {
-    cValueType.parameterizedBy(rawStruct)
-  }
-
-  val structRefType = ParameterizedTypeName.run {
-    cPointerType.parameterizedBy(clazz.toClassName())
-  }
 
   type.addProperty(
           PropertySpec
@@ -119,30 +130,55 @@ fun GeneratorParameters.generateType(clazz: ClassDescriptor,
               first() + drop(1).joinToString("") { it.capitalize() }
             }
 
-            val function = detectFunction(p, "X")
+            val function = detectFunction(p, propName)
             if (function != null) {
+              val (funcSpec, params) = function
+
               type.addModifiers(KModifier.OPEN)
+              funcSpec.addModifiers(KModifier.OPEN)
+
+              funcSpec.beginControlFlow("return struct.useContents{")
+              funcSpec.addStatement("$name!!.invoke(${params.joinToString(", ") { it.first }})")
+              funcSpec.endControlFlow()
+
+              type.addFunction(funcSpec.build())
+              return@forEach
             }
-            println("Is is function .v.")
 
             if (p.type.toTypeName() == ClassName("org.jonnyzzz.cef.interop", "_cef_string_utf16_t")) {
               val prop = PropertySpec.builder(propName, String::class).mutable(true)
-              prop.getter(FunSpec.getterBuilder().addStatement("return struct.useContents{ $accessor$name.asString() }").build())
-              prop.setter(FunSpec.setterBuilder().addParameter("value", p.type.toTypeName()).addStatement("struct.useContents{ $accessor$name.copyFrom(value) }").build())
-            } else {
-              val prop = PropertySpec.builder(propName, p.type.toTypeName()).mutable(true)
-              prop.getter(FunSpec.getterBuilder().addStatement("return struct.useContents{ $accessor$name }").build())
-              val setter = FunSpec.setterBuilder().addParameter("value", p.type.toTypeName())
-              setter.beginControlFlow("struct.useContents{ ")
-              if (p.returnType in copyFromTypes) {
-                setter.addStatement("$accessor$name.copyFrom(value)")
-              } else {
-                setter.addStatement("$accessor$name = value")
-              }
-              setter.endControlFlow()
-              prop.setter(setter.build())
-              type.addProperty(prop.build())
+              prop.getter(FunSpec.getterBuilder()
+                      .beginControlFlow("return struct.useContents")
+                      .addStatement("$name.asString()")
+                      .endControlFlow()
+                      .build()
+                      )
+              prop.setter(FunSpec.setterBuilder()
+                      .addParameter("value", p.type.toTypeName())
+                      .beginControlFlow("struct.useContents")
+                      .addStatement("$name.copyFrom(value)")
+                      .endControlFlow()
+                      .build())
+              return@forEach
             }
+
+            val prop = PropertySpec.builder(propName, p.type.toTypeName()).mutable(true)
+            prop.getter(FunSpec.getterBuilder()
+                    .beginControlFlow("return struct.useContents")
+                    .addStatement(name)
+                    .endControlFlow()
+                    .build()
+            )
+            val setter = FunSpec.setterBuilder().addParameter("value", p.type.toTypeName())
+            setter.beginControlFlow("struct.useContents")
+            if (p.returnType in copyFromTypes) {
+              setter.addStatement("$name.copyFrom(value)")
+            } else {
+              setter.addStatement("$name = value")
+            }
+            setter.endControlFlow()
+            prop.setter(setter.build())
+            type.addProperty(prop.build())
           }
 
 
