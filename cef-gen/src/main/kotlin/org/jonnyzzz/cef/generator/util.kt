@@ -4,17 +4,23 @@ import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.WildcardTypeName
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
 import org.jetbrains.kotlin.resolve.descriptorUtil.parents
 import org.jetbrains.kotlin.serialization.konan.KonanPackageFragment
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.isNullable
-import org.jetbrains.kotlin.types.typeUtil.replaceArgumentsWithNothing
-import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 
-fun ClassifierDescriptor.toClassName() =
-        ClassName(parents.firstIsInstance<KonanPackageFragment>().fqName.asString(), name.asString())
+val memberScopeType = ClassName.bestGuess("kotlinx.cinterop.MemScope")
+val cValueType = ClassName.bestGuess("kotlinx.cinterop.CValue")
+val cPointerType = ClassName.bestGuess("kotlinx.cinterop.CPointer")
+
+fun ClassifierDescriptor.toClassName(): ClassName = when(val firstParent = parents.first()) {
+  is ClassDescriptor -> firstParent.toClassName().nestedClass(name.asString())
+  is KonanPackageFragment -> ClassName(firstParent.fqName.asString(), name.asString())
+  else -> error("Unsupported type $javaClass: $this")
+}
 
 fun KotlinType.toTypeName(): TypeName {
   val rawType = constructor.declarationDescriptor!!.toClassName().copy(isNullable())

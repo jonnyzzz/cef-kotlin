@@ -1,6 +1,7 @@
 package org.jonnyzzz.cef.generator
 
 import com.squareup.kotlinpoet.AnnotationSpec
+import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
@@ -44,6 +45,7 @@ fun GeneratorParameters.generateCopyFunction(clazz: ClassDescriptor): KotlinType
                           .addMember("%S", "NOTHING_TO_INLINE")
                           .build()
                   )
+                  .addAnnotation(ClassName("kotlin", "ExperimentalUnsignedTypes"))
                   .addKdoc("Performs deep copy of all\n" +
                            "fields of the [target] structure\n" +
                            "into the receiver structure")
