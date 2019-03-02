@@ -1,5 +1,6 @@
 package org.jonnyzzz.cef.generator
 
+import com.squareup.kotlinpoet.FileSpec
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
@@ -30,7 +31,9 @@ fun main(args: Array<String>) {
 
 operator fun File.div(s: String) = File(this, s)
 
-data class GeneratorParameters(val outputDir: File)
+data class GeneratorParameters(val outputDir: File) {
+  fun FileSpec.writeTo() = writeTo(outputDir)
+}
 
 private fun mainImpl(args: Array<String>) {
   println("Kotlin CEF API generator.")
@@ -102,6 +105,7 @@ private fun GeneratorParameters.visitModule(module: ModuleDescriptor) {
 
   println("------------\n\n\n")
 
-  generateCopyFunctions(descriptors.filterIsInstance<ClassDescriptor>())
+  val copyFromTypes = generateCopyFunctions(descriptors.filterIsInstance<ClassDescriptor>())
   generateValFunctions(descriptors.filterIsInstance<PropertyDescriptor>())
+  generateTypes(descriptors.filterIsInstance<ClassDescriptor>(), copyFromTypes)
 }

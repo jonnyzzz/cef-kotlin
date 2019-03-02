@@ -9,26 +9,28 @@ import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.resolve.descriptorUtil.classId
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
+import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeSubstitution
 
 
 private const val copyMethodName = "copyFrom"
 
 
-fun GeneratorParameters.generateCopyFunctions(clazzez: List<ClassDescriptor>) {
-  clazzez.forEach {
+fun GeneratorParameters.generateCopyFunctions(clazzez: List<ClassDescriptor>): Set<KotlinType> {
+  return clazzez.mapNotNull {
 
     if (it.name.asString() != "sched_param" && it.getSuperClassNotAny()?.classId == ClassId.fromString("kotlinx/cinterop/CStructVar")) {
       println("${it.name.asString()} - generate")
       generateCopyFunction(it)
     } else {
       println("${it.name.asString()} - SKIP")
+      null
     }
-  }
+  }.toSet()
 }
 
 
-fun GeneratorParameters.generateCopyFunction(clazz: ClassDescriptor) {
+fun GeneratorParameters.generateCopyFunction(clazz: ClassDescriptor): KotlinType? {
   val className = clazz.toClassName()
 
 
@@ -64,4 +66,6 @@ fun GeneratorParameters.generateCopyFunction(clazz: ClassDescriptor) {
   ).build()
 
   poet.writeTo(outputDir)
+
+  return clazz.defaultType
 }

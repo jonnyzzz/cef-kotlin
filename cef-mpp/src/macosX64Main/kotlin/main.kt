@@ -20,11 +20,8 @@ fun String.asCefString(): cef_string_t = memScoped {
 
 fun cef_string_t.copyFrom(str: String) = copyFrom(str.asCefString())
 
-/*
+fun cef_string_t.asString() : String = TODO()
 
-
-var cef_string_t.value
-  get() = { safe_cef_string_to_utf8()}
+var cef_string_t.value : String
+  get() = asString()
   set(value) { copyFrom(value) }
-
-*/

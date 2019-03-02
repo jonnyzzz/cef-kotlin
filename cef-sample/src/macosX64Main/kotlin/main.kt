@@ -9,13 +9,12 @@ import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.sizeOf
 import kotlinx.cinterop.staticCFunction
-import org.jonnyzzz.cef.copyFrom
+import org.jonnyzzz.cef.generated.CefSettings
 import org.jonnyzzz.cef.interop._cef_base_ref_counted_t
 import org.jonnyzzz.cef.interop.cef_app_t
 import org.jonnyzzz.cef.interop.cef_execute_process
 import org.jonnyzzz.cef.interop.cef_initialize
 import org.jonnyzzz.cef.interop.cef_main_args_t
-import org.jonnyzzz.cef.interop.cef_settings_t
 import kotlin.system.exitProcess
 
 
@@ -41,10 +40,10 @@ fun main(args: Array<String>): Unit = memScoped {
     exitProcess(childProcess)
   }
 
-  val cefSettings = alloc<cef_settings_t> {
-    browser_subprocess_path.copyFrom("/Users/jonnyzzz/Work/cef-kotlin/cef-sample/build/bin/macosX64/debugExecutable.apps/cef-sample.app/Contents/MacOS/cef-sample.kexe")
+  val cefSettings = CefSettings().apply {
+    browser_subprocess_path = "/Users/jonnyzzz/Work/cef-kotlin/cef-sample/build/bin/macosX64/debugExecutable.apps/cef-sample.app/Contents/MacOS/cef-sample.kexe"
   }
 
-  cef_initialize(mainArgs.ptr, cefSettings.ptr, app.ptr, null)
+  cef_initialize(mainArgs.ptr, cefSettings.run { ptr }  , app.ptr, null)
 }
 
