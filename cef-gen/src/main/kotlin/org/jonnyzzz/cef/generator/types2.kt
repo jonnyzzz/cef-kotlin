@@ -110,3 +110,39 @@ private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = Ce
   poet.build().writeTo()
 }
 
+/*
+*
+*
+private class KCefBeforeDownloadCallbackStruct(rawPtr: NativePtr) : CStructVar(rawPtr) {
+    val cef: _cef_before_download_callback_t
+        get() = memberAt(0)
+
+    val stablePtr : COpaquePointerVar
+        get() = memberAt(_cef_before_download_callback_t.size)
+
+    companion object : CStructVar.Type(_cef_before_download_callback_t.size + 8,
+            _cef_before_download_callback_t.align)
+}
+
+@ExperimentalUnsignedTypes
+abstract class KCefBeforeDownloadCallbackBase(scope: DeferScope) : KCefBeforeDownloadCallback {
+    private val stableRef = StableRef.create(this).also { scope.defer { it.dispose() } }
+
+    private val cValue = kotlinx.cinterop.cValue<KCefBeforeDownloadCallbackStruct> {
+        cef.base.size = KCefBeforeDownloadCallbackStruct.size.convert()
+
+        cef.cont = staticCFunction {
+            THIS, p0: CPointer<cef_string_t>?, p1 ->
+
+            val pThis = THIS!!.reinterpret<KCefBeforeDownloadCallbackStruct>()
+                    .pointed
+                    .stablePtr
+                    .value!!
+                    .asStableRef<KCefBeforeDownloadCallbackBase>().get()
+
+            pThis.cont(p0.asString(), p1)
+        }
+    }
+}
+*
+* */

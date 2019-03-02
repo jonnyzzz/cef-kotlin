@@ -1,5 +1,6 @@
 package org.jonnyzzz.cef
 
+import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.convert
 import kotlinx.cinterop.cstr
 import kotlinx.cinterop.memScoped
@@ -21,6 +22,8 @@ fun String.asCefString(): cef_string_t = memScoped {
 fun cef_string_t.copyFrom(str: String) = copyFrom(str.asCefString())
 
 fun cef_string_t.asString() : String = TODO()
+
+fun CPointer<cef_string_t>?.asString() = this?.pointed?.asString()
 
 var cef_string_t.value : String
   get() = asString()
