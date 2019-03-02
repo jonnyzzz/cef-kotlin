@@ -25,28 +25,33 @@ fun GeneratorParameters.generateTypes(clazzez: List<ClassDescriptor>) {
   }
 }
 
+fun CefTypeInfo(clazz: ClassDescriptor) = CefTypeInfo(clazz.toClassName())
 
-fun GeneratorParameters.generateType(clazz: ClassDescriptor,
-                                     copyFromTypes: Set<KotlinType>) {
-  println("Generate Typed Wrapper for $clazz")
-
-  val cleanName = clazz.name.asString().removePrefix("_").removePrefix("cef").removeSuffix("_t")
+data class CefTypeInfo(
+        val rawStruct: ClassName
+) {
+  val cleanName = rawStruct.simpleName.removePrefix("_").removePrefix("cef").removeSuffix("_t")
   val typeName = "Cef" + cleanName.split("_").joinToString("") { it.capitalize() }
   val pointedName = "pointed_$cleanName"
 
-  val rawStruct = clazz.toClassName()
+  val typeClassName = ClassName(cefGeneratedPackage, typeName)
 
   val structType = ParameterizedTypeName.run {
     cValueType.parameterizedBy(rawStruct)
   }
 
   val structRefType = ParameterizedTypeName.run {
-    cPointerType.parameterizedBy(clazz.toClassName())
+    cPointerType.parameterizedBy(rawStruct)
   }
+}
 
+
+fun GeneratorParameters.generateType(clazz: ClassDescriptor,
+                                     copyFromTypes: Set<KotlinType>) : Unit = CefTypeInfo(clazz).run {
+  println("Generate Typed Wrapper for $clazz")
 
   val poet = FileSpec.builder(
-          "org.jonnyzzz.cef.generated",
+          cefGeneratedPackage,
           typeName
   )
           .addImport("kotlinx.cinterop", "cValue", "convert", "useContents", "memberAt", "ptr", "reinterpret", "invoke", "pointed")
@@ -54,9 +59,8 @@ fun GeneratorParameters.generateType(clazz: ClassDescriptor,
           .addImport("org.jonnyzzz.cef.generated", "copyFrom")
           .addAnnotation(AnnotationSpec.builder(Suppress::class).addMember("%S", "unused").build())
 
-  val type = TypeSpec.classBuilder(typeName)
+  val type = TypeSpec.interfaceBuilder(typeName)
           .addAnnotation(ClassName("kotlin", "ExperimentalUnsignedTypes"))
-          .addModifiers(KModifier.ABSTRACT)
 
   /*
   .primaryConstructor(FunSpec.constructorBuilder()
@@ -67,13 +71,28 @@ fun GeneratorParameters.generateType(clazz: ClassDescriptor,
           .build())
 */
 
-  val isCefBased =
-          clazz.getMemberScope(TypeSubstitution.EMPTY).getContributedDescriptors()
-                  .filter { it.shouldBePrinted }
-                  .filterIsInstance<PropertyDescriptor>()
-                  .firstOrNull { it.name.asString() == "base" }?.let {
-                    it.returnType?.toTypeName() == ClassName(cefInteropPackage, "_cef_base_ref_counted_t")
-                  } ?: false
+
+  val cefBase = ClassName(cefInteropPackage, "_cef_base_ref_counted_t")
+  val isCefBased = clazz.getMemberScope(TypeSubstitution.EMPTY).getContributedDescriptors()
+          .filter { it.shouldBePrinted }
+          .filterIsInstance<PropertyDescriptor>()
+          .firstOrNull { it.name.asString() == "base" }?.let {
+            it.returnType?.toTypeName() == cefBase
+          } ?: false
+
+
+  if (isCefBased) {
+    val cefBaseInfo = CefTypeInfo(cefBase)
+    type.addSuperinterface(cefBaseInfo.typeClassName)
+
+    type.addProperty(PropertySpec
+            .builder(cefBaseInfo.pointedName, cefBaseInfo.rawStruct, KModifier.OVERRIDE)
+            .getter(FunSpec.getterBuilder().addStatement("return $pointedName.base").build())
+            .build()
+    )
+  }
+
+
 /*
   val (rawStruct, accessor) = if (isCefBased) {
     val companion = TypeSpec.companionObjectBuilder()
@@ -123,7 +142,7 @@ fun GeneratorParameters.generateType(clazz: ClassDescriptor,
 */
 
   type.addProperty(
-          PropertySpec.builder(pointedName, rawStruct, KModifier.ABSTRACT).build()
+          PropertySpec.builder(pointedName, rawStruct).build()
   )
 
   clazz.getMemberScope(TypeSubstitution.EMPTY).getContributedDescriptors()
@@ -140,8 +159,6 @@ fun GeneratorParameters.generateType(clazz: ClassDescriptor,
             val function = detectFunction(p, propName)
             if (function != null) {
               val (funcSpec, params, returnType) = function
-              funcSpec.addModifiers(KModifier.OPEN)
-
               when {
                 returnType in enumTypes -> funcSpec.addStatement("TODO(%S)", "cinterop does not support enum C function return types (e.g. in 1.3.21)")
                 returnType is ParameterizedTypeName && returnType.rawType == ClassName("kotlinx.cinterop", "CValue") -> funcSpec.addStatement("TODO(%S)", "cinterop does not support CValue<*> C function return types (e.g. in 1.3.21)")

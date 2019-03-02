@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.types.isNullable
 
 
 val cefInteropPackage = "org.jonnyzzz.cef.interop"
+val cefGeneratedPackage = "org.jonnyzzz.cef.generated"
 
 val memberScopeType = ClassName.bestGuess("kotlinx.cinterop.MemScope")
 val cValueType = ClassName.bestGuess("kotlinx.cinterop.CValue")
