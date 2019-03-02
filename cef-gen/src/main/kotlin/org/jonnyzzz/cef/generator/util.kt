@@ -23,9 +23,9 @@ val cefBaseRefCounted = ClassName(cefInteropPackage, "_cef_base_ref_counted_t")
 
 val kotlinString = ClassName.bestGuess("String")
 
-val memberScopeType = ClassName.bestGuess("kotlinx.cinterop.MemScope")
-val cValueType = ClassName.bestGuess("kotlinx.cinterop.CValue")
-val cPointerType = ClassName.bestGuess("kotlinx.cinterop.CPointer")
+val memberScopeType = ClassName("kotlinx.cinterop", "MemScope")
+val cValueType = ClassName("kotlinx.cinterop", "CValue")
+val cPointerType = ClassName("kotlinx.cinterop", "CPointer")
 
 fun ClassifierDescriptor.toClassName(): ClassName = when(val firstParent = parents.first()) {
   is ClassDescriptor -> firstParent.toClassName().nestedClass(name.asString())
