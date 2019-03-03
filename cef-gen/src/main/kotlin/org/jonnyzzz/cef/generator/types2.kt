@@ -33,7 +33,7 @@ private fun GeneratorParameters.generateStructWrapper(info: CefTypeInfo) : TypeS
           .addSuperclassConstructorParameter("rawPtr")
           .addType(TypeSpec.companionObjectBuilder()
                   .superclass(ClassName("kotlinx.cinterop", "CStructVar.Type"))
-                  .addSuperclassConstructorParameter("%T.size + 8, %T.align", rawStruct, rawStruct).build())
+                  .addSuperclassConstructorParameter("%T.size + %T.size, %T.align", rawStruct, cOpaquePointerVar, rawStruct).build())
           .addProperty(
                   PropertySpec
                           .builder("cef", rawStruct)
@@ -104,6 +104,17 @@ private fun GeneratorParameters.generateImplBase(info: CefTypeInfo, clazz: Class
               addSuperinterface(CefTypeInfo(cefBaseClassDescriptor).kInterfaceTypeName, CodeBlock.of("%T()", cefBaseRefCountedKImpl))
             }
           }
+
+          .addProperty(PropertySpec
+                  .builder("ptr", rawStruct.asNullableCPointer())
+                  .receiver(memberScopeType)
+                  .getter(FunSpec
+                          .getterBuilder()
+                          .addStatement("return cValue.ptr.reinterpret()")
+                          .build()
+                  ).build()
+          )
+
           //private val stableRef = StableRef.create(this).also { defer.defer { it.dispose() } }
           .addProperty(PropertySpec
                   .builder("stableRef", ParameterizedTypeName.run { stableRef.parameterizedBy(kImplBaseTypeName) })
@@ -118,6 +129,8 @@ private fun GeneratorParameters.generateImplBase(info: CefTypeInfo, clazz: Class
                   .initializer(cValueInit)
                   .build()
           )
+
+
 
 }
 

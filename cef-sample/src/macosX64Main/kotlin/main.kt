@@ -10,7 +10,13 @@ import kotlinx.cinterop.ptr
 import kotlinx.cinterop.sizeOf
 import kotlinx.cinterop.staticCFunction
 import org.jonnyzzz.cef.generated.CefSettings
+import org.jonnyzzz.cef.generated.KCefAppImplBase
 import org.jonnyzzz.cef.interop._cef_base_ref_counted_t
+import org.jonnyzzz.cef.interop._cef_browser_process_handler_t
+import org.jonnyzzz.cef.interop._cef_command_line_t
+import org.jonnyzzz.cef.interop._cef_render_process_handler_t
+import org.jonnyzzz.cef.interop._cef_resource_bundle_handler_t
+import org.jonnyzzz.cef.interop._cef_scheme_registrar_t
 import org.jonnyzzz.cef.interop.cef_app_t
 import org.jonnyzzz.cef.interop.cef_execute_process
 import org.jonnyzzz.cef.interop.cef_initialize
@@ -26,13 +32,12 @@ fun main(args: Array<String>): Unit = memScoped {
     this.argv = allocArrayOf(args.map { it.cstr.ptr })
   }
 
-  val app = alloc<cef_app_t> {
-    this.base.size = sizeOf<cef_app_t>().convert()
-
-    this.base.add_ref = staticCFunction<CPointer<_cef_base_ref_counted_t>?, Unit> {  }
-    this.base.has_at_least_one_ref = staticCFunction<CPointer<_cef_base_ref_counted_t>?, Int> { 0 }
-    this.base.has_one_ref = staticCFunction<CPointer<_cef_base_ref_counted_t>?, Int> { 0 }
-    this.base.release = staticCFunction<CPointer<_cef_base_ref_counted_t>?, Int> { 0 }
+  val app = object : KCefAppImplBase(this) {
+    override fun getBrowserProcessHandler() = null
+    override fun getRenderProcessHandler() = null
+    override fun getResourceBundleHandler() = null
+    override fun onBeforeCommandLineProcessing(p0: String?, p1: CPointer<_cef_command_line_t>?) = Unit
+    override fun onRegisterCustomSchemes(p0: CPointer<_cef_scheme_registrar_t>?) = Unit
   }
 
   val childProcess = cef_execute_process(mainArgs.ptr, null, null)
@@ -40,10 +45,10 @@ fun main(args: Array<String>): Unit = memScoped {
     exitProcess(childProcess)
   }
 
-  val cefSettings = CefSettings().apply {
-    browser_subprocess_path = "/Users/jonnyzzz/Work/cef-kotlin/cef-sample/build/bin/macosX64/debugExecutable.apps/cef-sample.app/Contents/MacOS/cef-sample.kexe"
-  }
-
-  cef_initialize(mainArgs.ptr, cefSettings.run { ptr }  , app.ptr, null)
+//  val cefSettings = CefSettings().apply {
+//    browser_subprocess_path = "/Users/jonnyzzz/Work/cef-kotlin/cef-sample/build/bin/macosX64/debugExecutable.apps/cef-sample.app/Contents/MacOS/cef-sample.kexe"
+//  }
+//
+  cef_initialize(mainArgs.ptr, null , app.run { ptr } , null)
 }
 

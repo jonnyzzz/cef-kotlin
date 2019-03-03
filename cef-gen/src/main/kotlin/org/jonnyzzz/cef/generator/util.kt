@@ -38,8 +38,11 @@ fun ClassifierDescriptor.toClassName(): ClassName = when(val firstParent = paren
 
 fun TypeProjection.toTypeName() = type.toTypeName()
 
-fun ClassName.asNullableCPointer() = cPointerType.parameterizedBy(this).copy(nullable = true)
-fun ClassName.asCValue() = cValueType.parameterizedBy(this).copy(nullable = true)
+fun ClassName.asCPointer() = cPointerType.parameterizedBy(this)
+fun ClassName.asCValue() = cValueType.parameterizedBy(this)
+
+fun ClassName.asNullableCPointer() = asCPointer().copy(nullable = true)
+fun ClassName.asNullableCValue() = asCValue().copy(nullable = true)
 
 fun KotlinType.toTypeName(): TypeName {
   val rawType = constructor.declarationDescriptor!!.toClassName().copy(isNullable())
