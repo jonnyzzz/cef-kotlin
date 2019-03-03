@@ -24,8 +24,10 @@ val cefBaseRefCounted = ClassName(cefInteropPackage, "_cef_base_ref_counted_t")
 val kotlinString = ClassName.bestGuess("String")
 
 val memberScopeType = ClassName("kotlinx.cinterop", "MemScope")
+val stableRef = ClassName("kotlinx.cinterop", "StableRef")
 val cValueType = ClassName("kotlinx.cinterop", "CValue")
 val cPointerType = ClassName("kotlinx.cinterop", "CPointer")
+val cOpaquePointerVar = ClassName("kotlinx.cinterop", "COpaquePointerVar")
 
 fun ClassifierDescriptor.toClassName(): ClassName = when(val firstParent = parents.first()) {
   is ClassDescriptor -> firstParent.toClassName().nestedClass(name.asString())
@@ -36,6 +38,7 @@ fun ClassifierDescriptor.toClassName(): ClassName = when(val firstParent = paren
 fun TypeProjection.toTypeName() = type.toTypeName()
 
 fun ClassName.asNullableCPointer() = cPointerType.parameterizedBy(this).copy(nullable = true)
+fun ClassName.asCValue() = cValueType.parameterizedBy(this).copy(nullable = true)
 
 fun KotlinType.toTypeName(): TypeName {
   val rawType = constructor.declarationDescriptor!!.toClassName().copy(isNullable())

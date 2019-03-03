@@ -21,6 +21,8 @@ data class CefTypeInfo(
   val kStructName = "${kInterfaceName}Struct"
   val kStructTypeName = ClassName(cefGeneratedPackage, kStructName)
 
+  val kImplBaseTypeName = ClassName(cefGeneratedPackage, "${kInterfaceName}ImplBase")
+
   val pointedName = "pointed_$cleanName"
 
   val typeClassName = ClassName(cefGeneratedPackage, typeName)

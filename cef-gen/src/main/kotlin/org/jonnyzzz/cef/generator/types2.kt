@@ -2,9 +2,11 @@ package org.jonnyzzz.cef.generator
 
 import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -25,9 +27,7 @@ fun GeneratorParameters.generateTypes2(clazzez: List<ClassDescriptor>) {
   }
 }
 
-private fun GeneratorParameters.generateStructWrapper(poet : FileSpec.Builder,
-                                                      info: CefTypeInfo) : TypeSpec.Builder = info.run {
-
+private fun GeneratorParameters.generateStructWrapper(info: CefTypeInfo) : TypeSpec.Builder = info.run {
   TypeSpec.classBuilder(kStructTypeName)
           .addModifiers(KModifier.PRIVATE)
           .primaryConstructor(FunSpec.constructorBuilder().addParameter("rawPtr", ClassName("kotlinx.cinterop", "NativePtr")).build())
@@ -36,13 +36,58 @@ private fun GeneratorParameters.generateStructWrapper(poet : FileSpec.Builder,
           .addType(TypeSpec.companionObjectBuilder()
                   .superclass(ClassName("kotlinx.cinterop", "CStructVar.Type"))
                   .addSuperclassConstructorParameter("%T.size + 8, %T.align", rawStruct, rawStruct).build())
-
           .addProperty(
                   PropertySpec
                           .builder("cef", rawStruct)
                           .getter(FunSpec.getterBuilder().addStatement("return memberAt(0)").build())
+                          .build()
+          )
+
+          // val stablePtr : COpaquePointerVar
+          //        get() = memberAt(_cef_before_download_callback_t.size)
+          .addProperty(
+                  PropertySpec
+                          .builder("stablePtr", cOpaquePointerVar)
+                          .getter(FunSpec.getterBuilder().addStatement("return memberAt(%T.size)", rawStruct).build())
                   .build()
           )
+}
+
+private fun GeneratorParameters.generateImplBase(info: CefTypeInfo, clazz: ClassDescriptor) : TypeSpec.Builder = info.run {
+  val cValueInit = CodeBlock.builder()
+          .beginControlFlow("cValue").apply {
+            when {
+              clazz.isCefBased -> addStatement("cef.base.size = %T.size.convert()", kStructTypeName)
+              else -> addStatement("cef.size = %T.size.convert()", kStructTypeName)
+            }
+          }
+          .endControlFlow()
+          .build()
+
+
+  TypeSpec.classBuilder(kImplBaseTypeName)
+          .addModifiers(KModifier.ABSTRACT)
+          .addSuperinterface(kInterfaceTypeName)
+          .primaryConstructor(
+                  FunSpec.constructorBuilder()
+                          .addParameter("defer", ClassName("kotlinx.cinterop","DeferScope"))
+                          .build()
+          )
+          //private val stableRef = StableRef.create(this).also { defer.defer { it.dispose() } }
+          .addProperty(PropertySpec
+                  .builder("stableRef", ParameterizedTypeName.run { stableRef.parameterizedBy(kImplBaseTypeName) })
+                  .addModifiers(KModifier.PRIVATE)
+                  .initializer("%T.create(this).also { defer.defer { it.dispose() } }", stableRef)
+                  .build()
+                  )
+
+          .addProperty(PropertySpec
+                  .builder("cValue", kStructTypeName.asCValue())
+                  .addModifiers(KModifier.PRIVATE)
+                  .initializer(cValueInit)
+                  .build()
+          )
+
 }
 
 private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = CefTypeInfo(clazz).run {
@@ -56,9 +101,7 @@ private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = Ce
           .addAnnotation(AnnotationSpec.builder(Suppress::class).addMember("%S", "unused").build())
 
   val kInterface = TypeSpec.interfaceBuilder(kInterfaceName)
-          .addAnnotation(ClassName("kotlin", "ExperimentalUnsignedTypes"))
 
-  val kStructWrapper = generateStructWrapper(poet, this)
 
   //do we really need that base interface explicitly?
   /*
@@ -105,7 +148,9 @@ private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = Ce
           }
 
   poet.addType(kInterface.build())
-  poet.addType(kStructWrapper.build())
+
+  poet.addType(generateStructWrapper(this).build())
+  poet.addType(generateImplBase(this, clazz).build())
 
   poet.build().writeTo()
 }
