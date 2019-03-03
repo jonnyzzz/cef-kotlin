@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 fun GeneratorParameters.generateTypes2(clazzez: List<ClassDescriptor>) {
   clazzez.forEach {
 
-    if (it.name.asString() in setOf("_cef_base_ref_counted_t", "_cef_app_t", "_cef_before_download_callback_t"/*, "_cef_settings_t"*/)) {
+    if (it.name.asString() in setOf("_cef_base_ref_counted_t", "_cef_app_t", "_cef_before_download_callback_t", "_cef_settings_t")) {
       generateType2(it)
     }
 
