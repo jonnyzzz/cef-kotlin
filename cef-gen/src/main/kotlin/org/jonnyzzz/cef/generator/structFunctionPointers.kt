@@ -7,25 +7,19 @@ import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.resolve.descriptorUtil.classId
 import org.jetbrains.kotlin.types.SimpleType
-import org.jetbrains.kotlin.types.TypeSubstitution
 
 
 data class DetectedFunctionParam(
         val paramName: String,
         val paramType: TypeName,
         //the C declared type name, before type mapping
-        val originalTypeName: TypeName? = null
-)
+        override val originalTypeName: TypeName? = null
+) : TypeReplaceableHost<DetectedFunctionParam> {
+  override val type: TypeName
+    get() = paramType
 
-fun DetectedFunctionParam.fromCefToKotlin() : String = when {
-  originalTypeName == null -> paramName
-  originalTypeName == cefString16 -> "$paramName.asString()"
-  originalTypeName == cefString16.asNullableCPointer() -> "$paramName?.asString()"
-  else -> TODO("Not supported for $this")
+  override fun replaceType(newType: TypeName) = copy(originalTypeName = paramType, paramType = newType)
 }
-
-private fun DetectedFunctionParam.replaceType(newType: TypeName)
-        = copy(originalTypeName = this.paramType, paramType = newType)
 
 data class DetectedFunction(
         val funcDeclaration: FunSpec.Builder,
@@ -70,12 +64,6 @@ fun detectFunctionProperty(prop: PropertyDescriptor, funName: String): DetectedF
 }
 
 
-fun ClassDescriptor.allMeaningfulProperties() =
-        getMemberScope(TypeSubstitution.EMPTY).getContributedDescriptors()
-                .filter { it.shouldBePrinted }
-                .filterIsInstance<PropertyDescriptor>()
-                .filter { it.name.asString() !in setOf("size", "base") }
-
 
 data class FunctionalPropertyDescriptor(
         val cFieldName : String,
@@ -104,12 +92,7 @@ fun ClassDescriptor.allFunctionalProperties(props: GeneratorParameters, info: Ce
     val fReturnType = funType.last()
     val THIS = DetectedFunctionParam("THIS", firstParam)
     val fParams = funType.dropLast(1).drop(1).mapIndexed { idx, paramType ->
-      val baseParam = DetectedFunctionParam("p$idx", paramType)
-      when (paramType) {
-        cefString16 -> baseParam.replaceType(kotlinString)
-        cefString16.asNullableCPointer() -> baseParam.replaceType(kotlinString.copy(nullable = true))
-        else -> baseParam
-      }
+      DetectedFunctionParam("p$idx", paramType).replaceToKotlinTypes()
     }
 
     FunctionalPropertyDescriptor(name, propName, THIS,fParams, fReturnType )

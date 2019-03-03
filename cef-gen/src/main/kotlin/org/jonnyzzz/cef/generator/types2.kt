@@ -58,8 +58,10 @@ private fun GeneratorParameters.generateImplBase(info: CefTypeInfo, clazz: Class
               clazz.isCefBased -> addStatement("cef.base.size = %T.size.convert()", kStructTypeName)
               else -> addStatement("cef.size = %T.size.convert()", kStructTypeName)
             }
-          }.also { code ->
+          }
 
+          .addStatement("stablePtr.value = stableRef.asCPointer()")
+          .also { code ->
             for (p in clazz.allFunctionalProperties(this@generateImplBase, this)) {
               code.beginControlFlow("cef.${p.cFieldName} = staticCFunction")
               code.addStatement(
@@ -82,7 +84,7 @@ private fun GeneratorParameters.generateImplBase(info: CefTypeInfo, clazz: Class
               code.unindent().unindent()
               code.addStatement("")
               code.addStatement("pThis.${p.funName}(" +
-                      p.parameters.joinToString(", ") { it.fromCefToKotlin() } +
+                      p.parameters.joinToString(", ") { it.fromCefToKotlin(it.paramName) } +
                       ")")
               code.endControlFlow()
               code.addStatement("")
@@ -131,6 +133,37 @@ private fun GeneratorParameters.generateImplBase(info: CefTypeInfo, clazz: Class
           )
 
 
+          .also { type ->
+            clazz.allFieldProperties(this@generateImplBase).forEach { p ->
+              val spec = PropertySpec
+                      .builder(p.propName, p.propType, KModifier.OVERRIDE).mutable(true)
+                      .getter(FunSpec
+                              .getterBuilder()
+                              .beginControlFlow("cValue.useContents")
+                              .addStatement("return " + p.fromCefToKotlin("cef.${p.cFieldName}"))
+                              .endControlFlow()
+                              .build()
+                      )
+                      .setter(FunSpec
+                              .setterBuilder()
+                              .addParameter("value", p.propType)
+                              .beginControlFlow("cValue.useContents")
+                              .apply {
+                                if (p.originalTypeName?: p.propType in copyFromTypeNames) {
+                                  addStatement("cef.${p.cFieldName}.copyFrom(value)")
+                                } else {
+                                  addStatement("cef.${p.cFieldName} = value")
+                                }
+                              }
+                              .endControlFlow()
+                              .build()
+                      )
+
+
+              type.addProperty(spec.build())
+            }
+
+          }
 
 }
 
@@ -163,6 +196,11 @@ private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = Ce
     fSpec.returns(p.returnType)
     fSpec.addModifiers(KModifier.ABSTRACT)
     kInterface.addFunction(fSpec.build())
+  }
+
+  clazz.allFieldProperties(this@generateType2).filter { it.visibleInInterface }.forEach { p ->
+    val spec = PropertySpec.builder(p.propName, p.propType).mutable(true)
+    kInterface.addProperty(spec.build())
   }
 
   poet.addType(kInterface.build())

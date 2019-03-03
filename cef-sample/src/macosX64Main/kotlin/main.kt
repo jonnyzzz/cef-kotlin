@@ -3,24 +3,17 @@ package org.jonnyzzz.cef.example
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.allocArrayOf
-import kotlinx.cinterop.convert
 import kotlinx.cinterop.cstr
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
-import kotlinx.cinterop.sizeOf
-import kotlinx.cinterop.staticCFunction
-import org.jonnyzzz.cef.generated.CefSettings
 import org.jonnyzzz.cef.generated.KCefAppImplBase
-import org.jonnyzzz.cef.interop._cef_base_ref_counted_t
-import org.jonnyzzz.cef.interop._cef_browser_process_handler_t
+import org.jonnyzzz.cef.generated.KCefSettingsImplBase
 import org.jonnyzzz.cef.interop._cef_command_line_t
-import org.jonnyzzz.cef.interop._cef_render_process_handler_t
-import org.jonnyzzz.cef.interop._cef_resource_bundle_handler_t
 import org.jonnyzzz.cef.interop._cef_scheme_registrar_t
-import org.jonnyzzz.cef.interop.cef_app_t
 import org.jonnyzzz.cef.interop.cef_execute_process
 import org.jonnyzzz.cef.interop.cef_initialize
 import org.jonnyzzz.cef.interop.cef_main_args_t
+import org.jonnyzzz.cef.interop.cef_shutdown
 import kotlin.system.exitProcess
 
 
@@ -45,10 +38,15 @@ fun main(args: Array<String>): Unit = memScoped {
     exitProcess(childProcess)
   }
 
-//  val cefSettings = CefSettings().apply {
-//    browser_subprocess_path = "/Users/jonnyzzz/Work/cef-kotlin/cef-sample/build/bin/macosX64/debugExecutable.apps/cef-sample.app/Contents/MacOS/cef-sample.kexe"
-//  }
-//
-  cef_initialize(mainArgs.ptr, null , app.run { ptr } , null)
+  val cefSettings = object: KCefSettingsImplBase(this){}.apply {
+    browserSubprocessPath = "/Users/jonnyzzz/Work/cef-kotlin/cef-sample/build/bin/macosX64/debugExecutable.apps/cef-sample.app/Contents/MacOS/cef-sample.kexe"
+  }
+
+  cef_initialize(mainArgs.ptr, cefSettings.run { ptr } , app.run { ptr } , null)
+  println("cef_initialize - complete")
+
+  cef_shutdown()
+  println("cef_shutdown - complete")
+
 }
 

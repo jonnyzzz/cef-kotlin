@@ -11,6 +11,7 @@ data class GeneratorParameters(val outputDir: File) {
 
   lateinit var enumTypes : Set<TypeName>
   lateinit var copyFromTypes: Set<KotlinType>
+  val copyFromTypeNames: Set<TypeName> get() = copyFromTypes.map { it.toTypeName() }.toSet()
 
   lateinit var cefBaseClassDescriptor: ClassDescriptor
 }
