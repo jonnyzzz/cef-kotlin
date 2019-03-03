@@ -1,7 +1,6 @@
 package org.jonnyzzz.cef.generator
 
 import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.ParameterizedTypeName
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.types.TypeSubstitution
@@ -26,14 +25,6 @@ data class CefTypeInfo(
   val pointedName = "pointed_$cleanName"
 
   val typeClassName = ClassName(cefGeneratedPackage, typeName)
-
-  val structType = ParameterizedTypeName.run {
-    cValueType.parameterizedBy(rawStruct)
-  }
-
-  val structRefType = ParameterizedTypeName.run {
-    cPointerType.parameterizedBy(rawStruct)
-  }
 }
 
 

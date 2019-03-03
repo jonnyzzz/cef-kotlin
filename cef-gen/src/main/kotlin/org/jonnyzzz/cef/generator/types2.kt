@@ -10,8 +10,6 @@ import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.PropertyDescriptor
-import org.jetbrains.kotlin.types.TypeSubstitution
 
 
 fun GeneratorParameters.generateTypes2(clazzez: List<ClassDescriptor>) {
@@ -60,6 +58,35 @@ private fun GeneratorParameters.generateImplBase(info: CefTypeInfo, clazz: Class
               clazz.isCefBased -> addStatement("cef.base.size = %T.size.convert()", kStructTypeName)
               else -> addStatement("cef.size = %T.size.convert()", kStructTypeName)
             }
+          }.also { code ->
+
+            for (p in clazz.allFunctionalProperties(this)) {
+              code.beginControlFlow("cef.${p.cFieldName} = staticCFunction")
+              code.addStatement(
+                      (listOf(p.THIS) + p.parameters).joinToString(", ") { it.paramName } + " ->"
+              )
+
+              //   val pThis = THIS!!.reinterpret<KCefBeforeDownloadCallbackStruct>()
+              //                    .pointed
+              //                    .stablePtr
+              //                    .value!!
+              //                    .asStableRef<KCefBeforeDownloadCallbackBase>().get()
+
+              code.addStatement("val pThis = ${p.THIS.paramName}!!.reinterpret<%T>()", kStructTypeName)
+              code.indent().indent()
+              code.addStatement(".pointed")
+              code.addStatement(".stablePtr")
+              code.addStatement(".value!!")
+              code.addStatement(".asStableRef<%T>()", kImplBaseTypeName)
+              code.addStatement(".get()")
+              code.unindent().unindent()
+              code.addStatement("")
+              code.addStatement("pThis.${p.funName}(" +
+                      p.parameters.joinToString(", ") { it.fromCefToKotlin() } +
+                      ")")
+              code.endControlFlow()
+              code.addStatement("")
+            }
           }
           .endControlFlow()
           .build()
@@ -95,7 +122,7 @@ private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = Ce
           cefGeneratedPackage,
           "___TEST_${clazz.name.asString()}"
   )
-          .addImport("kotlinx.cinterop", "cValue", "convert", "useContents", "memberAt", "ptr", "reinterpret", "invoke", "pointed")
+          .addImport("kotlinx.cinterop", "cValue", "value", "convert", "useContents", "memberAt", "ptr", "reinterpret", "invoke", "pointed", "staticCFunction", "asStableRef")
           .addImport("org.jonnyzzz.cef", "value", "asString", "copyFrom")
           .addImport("org.jonnyzzz.cef.generated", "copyFrom")
           .addAnnotation(AnnotationSpec.builder(Suppress::class).addMember("%S", "unused").build())
@@ -109,43 +136,17 @@ private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = Ce
     type.addSuperinterface(CefTypeInfo(cefBaseRefCounted).kInterfaceTypeName)
   }*/
 
-  clazz.getMemberScope(TypeSubstitution.EMPTY).getContributedDescriptors()
-          .filter { it.shouldBePrinted }
-          .filterIsInstance<PropertyDescriptor>()
-          .filter { it.name.asString() !in setOf("size", "base") }
-          .forEach { p ->
-            val name = p.name.asString()
-            val propName = name.split("_").run {
-              first() + drop(1).joinToString("") { it.capitalize() }
-            }
+  for (p in clazz.allFunctionalProperties(this)) {
+    val fSpec = FunSpec.builder(p.funName)
 
-            val funType = detectFunctionPropertyType(p)
-            if (funType != null) {
-              val firstParam = funType.first()
+    p.parameters.forEach {
+      fSpec.addParameter(it.paramName, it.paramType)
+    }
 
-              ///first parameter myst be
-              if (firstParam != rawStruct.asNullableCPointer()) {
-                error("First parameter of $rawStruct must be self reference!, but was $firstParam")
-              }
-
-              val fSpec = FunSpec.builder(propName)
-              val fReturnType = funType.last()
-              funType.dropLast(1).drop(1).forEachIndexed { idx, paramType ->
-                fSpec.addParameter("p$idx",
-                        when (paramType) {
-                          cefString16 -> kotlinString
-                          cefString16.asNullableCPointer() -> kotlinString.copy(nullable = true)
-                          else -> paramType
-                        })
-              }
-
-              fSpec.returns(fReturnType)
-              fSpec.addModifiers(KModifier.ABSTRACT)
-              kInterface.addFunction(fSpec.build())
-              return@forEach
-            }
-            TODO("UNSUPPORTED property ${p.javaClass} : $p")
-          }
+    fSpec.returns(p.returnType)
+    fSpec.addModifiers(KModifier.ABSTRACT)
+    kInterface.addFunction(fSpec.build())
+  }
 
   poet.addType(kInterface.build())
 
