@@ -82,12 +82,13 @@ data class FunctionalPropertyDescriptor(
         val funName: String,
         val THIS: DetectedFunctionParam,
         val parameters: List<DetectedFunctionParam>,
-        val returnType: TypeName
+        val returnType: TypeName,
+        val visibleInInterface : Boolean = true
 )
 
 
-fun ClassDescriptor.allFunctionalProperties(info: CefTypeInfo) : List<FunctionalPropertyDescriptor> {
-  return allMeaningfulProperties().mapNotNull { p ->
+fun ClassDescriptor.allFunctionalProperties(props: GeneratorParameters, info: CefTypeInfo = CefTypeInfo(this)) : List<FunctionalPropertyDescriptor> {
+  val selfProperties = allMeaningfulProperties().mapNotNull { p ->
     val name = p.name.asString()
     val propName = name.split("_").run {
       first() + drop(1).joinToString("") { it.capitalize() }
@@ -113,4 +114,15 @@ fun ClassDescriptor.allFunctionalProperties(info: CefTypeInfo) : List<Functional
 
     FunctionalPropertyDescriptor(name, propName, THIS,fParams, fReturnType )
   }
+
+  if (isCefBased) {
+    return selfProperties + props.cefBaseClassDescriptor.allFunctionalProperties(props).map {
+      it.copy(visibleInInterface = false,
+              cFieldName = "base.${it.cFieldName}"
+      )
+    }
+  }
+
+  return selfProperties
 }
+

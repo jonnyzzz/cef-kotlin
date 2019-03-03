@@ -102,6 +102,7 @@ private fun GeneratorParameters.visitModule(module: ModuleDescriptor) {
 
   println("------------\n\n\n")
 
+  resolveCefBaseRefCounted(descriptors.filterIsInstance<ClassDescriptor>())
   collectAllEnums(descriptors.filterIsInstance<ClassDescriptor>())
   generateCopyFunctions(descriptors.filterIsInstance<ClassDescriptor>())
   generateValFunctions(descriptors.filterIsInstance<PropertyDescriptor>())
@@ -109,6 +110,9 @@ private fun GeneratorParameters.visitModule(module: ModuleDescriptor) {
   generateTypes2(descriptors.filterIsInstance<ClassDescriptor>())
 }
 
+fun GeneratorParameters.resolveCefBaseRefCounted(classes: List<ClassDescriptor>) {
+  cefBaseClassDescriptor = classes.first { it.toClassName() == cefBaseRefCounted }
+}
 
 private fun GeneratorParameters.collectAllEnums(classes: List<ClassDescriptor>) {
   enumTypes = classes.filter { clazz ->

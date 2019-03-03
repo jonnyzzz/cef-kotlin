@@ -20,6 +20,7 @@ val cefGeneratedPackage = "org.jonnyzzz.cef.generated"
 
 val cefString16 = ClassName(cefInteropPackage, "_cef_string_utf16_t")
 val cefBaseRefCounted = ClassName(cefInteropPackage, "_cef_base_ref_counted_t")
+val cefBaseRefCountedKImpl = ClassName("org.jonnyzzz.cef.internal", "KCefRefCountedImpl")
 
 val kotlinString = ClassName.bestGuess("String")
 

@@ -28,3 +28,5 @@ fun CPointer<cef_string_t>?.asString() = this?.pointed?.asString()
 var cef_string_t.value : String
   get() = asString()
   set(value) { copyFrom(value) }
+
+

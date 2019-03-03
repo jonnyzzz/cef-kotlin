@@ -60,7 +60,7 @@ private fun GeneratorParameters.generateImplBase(info: CefTypeInfo, clazz: Class
             }
           }.also { code ->
 
-            for (p in clazz.allFunctionalProperties(this)) {
+            for (p in clazz.allFunctionalProperties(this@generateImplBase, this)) {
               code.beginControlFlow("cef.${p.cFieldName} = staticCFunction")
               code.addStatement(
                       (listOf(p.THIS) + p.parameters).joinToString(", ") { it.paramName } + " ->"
@@ -99,7 +99,11 @@ private fun GeneratorParameters.generateImplBase(info: CefTypeInfo, clazz: Class
                   FunSpec.constructorBuilder()
                           .addParameter("defer", ClassName("kotlinx.cinterop","DeferScope"))
                           .build()
-          )
+          ).apply {
+            if (clazz.isCefBased) {
+              addSuperinterface(CefTypeInfo(cefBaseClassDescriptor).kInterfaceTypeName, CodeBlock.of("%T()", cefBaseRefCountedKImpl))
+            }
+          }
           //private val stableRef = StableRef.create(this).also { defer.defer { it.dispose() } }
           .addProperty(PropertySpec
                   .builder("stableRef", ParameterizedTypeName.run { stableRef.parameterizedBy(kImplBaseTypeName) })
@@ -136,7 +140,7 @@ private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = Ce
     type.addSuperinterface(CefTypeInfo(cefBaseRefCounted).kInterfaceTypeName)
   }*/
 
-  for (p in clazz.allFunctionalProperties(this)) {
+  clazz.allFunctionalProperties(this@generateType2, this).filter { it.visibleInInterface }.forEach { p ->
     val fSpec = FunSpec.builder(p.funName)
 
     p.parameters.forEach {
