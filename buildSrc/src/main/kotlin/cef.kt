@@ -18,6 +18,7 @@ interface CefConfigurationsBase {
   val cef_include: Configuration
   val cef_debug: Configuration
   val cef_release: Configuration
+  val cef_debug_symbols : Configuration
 
   val includeDir: File
 }
@@ -37,11 +38,13 @@ abstract class CefConfigurationsImpl(project: Project) : CefConfigurationsBase {
 
   override val cef_include by project.configurations.creating
   override val cef_debug by project.configurations.creating
+  override val cef_debug_symbols by project.configurations.creating
   override val cef_release by project.configurations.creating
 
   val cef_binaries_base by lazy { File(cefProject.buildDir, "cef_binaries_base") }
 
   val cefUnpackDir get() = File(cef_binaries_base, "cef_$osName")
+  val cefUnpackDebugSymbolsDir get() = File(cef_binaries_base, "cef_${osName}_symbols_debug")
   val cefBinariesDir get() = File(cef_binaries_base, "cef_${osName}_binaries")
 
   override val includeDir by lazy { cefUnpackDir }

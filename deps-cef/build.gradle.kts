@@ -13,32 +13,26 @@ plugins {
 val cefDownload by tasks.creating
 val cefUnpack by tasks.creating
 
-setupCefConfigurationsProject {
-  val cef_version = "3626.1883.g00e6af4"
-  val url = when (os) {
-    OS.Linux -> "https://opensource.spotify.com/cefbuilds/cef_binary_3.${cef_version}_linux64.tar.bz2"
-    OS.Windows -> "https://opensource.spotify.com/cefbuilds/cef_binary_3.${cef_version}_windows64.tar.bz2"
-    OS.Mac -> "https://opensource.spotify.com/cefbuilds/cef_binary_3.${cef_version}_macosx64.tar.bz2"
-  }
+data class CefSymbolsUrl(val debug: String,
+                         val release: String)
 
-  val osName = os.name.toLowerCase()
-  val cefArchiveName = url.split("/").last()
-  val cefDest = File(cef_binaries_base, cefArchiveName)
+fun downloadAndUnpackBZip2(
+        url: String,
+        downloadTaskName : String,
+        unpackTaskName : String,
+        downloadBase: File,
+        downloadUnpackedDir: File
+        ): Pair<Task, Task> {
+  val cefDest = downloadBase / (url.split("/").last())
 
-//TODO: download only one platform
-  val download = tasks.create<Download>(::cefDownload.name + "_$osName") {
-    cefDownload.dependsOn(this)
-
+  val download = tasks.create<Download>(downloadTaskName) {
     src(url)
     dest(cefDest)
-
     overwrite(false)
   }
 
-  val unpackTask = tasks.create(::cefUnpack.name + "_$osName") {
+  val unpackTask = tasks.create(unpackTaskName) {
     val markerFile = buildDir / "$name.completed"
-
-    cefUnpack.dependsOn(this)
     dependsOn(download)
 
     //optimization - Sync task works too slow in huge file-tree
@@ -47,11 +41,11 @@ setupCefConfigurationsProject {
 
     doLast {
       delete(markerFile)
-      logger.lifecycle("Extracting CEF to $cefUnpackDir...")
-      delete(cefUnpackDir)
+      logger.lifecycle("Extracting CEF to $downloadUnpackedDir...")
+      delete(downloadUnpackedDir)
       copy {
         from({ tarTree(resources.bzip2(cefDest)) })
-        into(cefUnpackDir)
+        into(downloadUnpackedDir)
         includeEmptyDirs = false
         eachFile {
           path = path.split("/", limit = 2)[1]
@@ -61,8 +55,48 @@ setupCefConfigurationsProject {
     }
   }
 
+  return download to unpackTask
+}
+
+setupCefConfigurationsProject {
+  val cef_version = "3626.1883.g00e6af4"
+  val url = when (os) {
+    OS.Linux -> "http://opensource.spotify.com/cefbuilds/cef_binary_3.${cef_version}_linux64.tar.bz2"
+    OS.Windows -> "http://opensource.spotify.com/cefbuilds/cef_binary_3.${cef_version}_windows64.tar.bz2"
+    OS.Mac -> "http://opensource.spotify.com/cefbuilds/cef_binary_3.${cef_version}_macosx64.tar.bz2"
+  }
+
+  val cef_symbols = "3.3626.1892.g7cb6de3"
+  val symbols = when(os) {
+    OS.Mac -> CefSymbolsUrl(
+            debug =   "http://opensource.spotify.com/cefbuilds/cef_binary_${cef_symbols}_macosx64_debug_symbols.tar.bz2",
+            release = "http://opensource.spotify.com/cefbuilds/cef_binary_${cef_symbols}_macosx64_release_symbols.tar.bz2")
+    else -> TODO("Add symbols URLs")
+  }
+  val osName = os.name.toLowerCase()
+  val (download, unpackTask) = downloadAndUnpackBZip2(url,
+          ::cefDownload.name + "_$osName",
+          ::cefUnpack.name + "_$osName",
+          cef_binaries_base,
+          cefUnpackDir
+  )
+
+  cefDownload.dependsOn(download)
+  cefUnpack.dependsOn(unpackTask)
+
+  val(downloadSymbols, unpackSymbols) = downloadAndUnpackBZip2(symbols.debug,
+          ::cefDownload.name + "_${osName}_debug_symbols",
+          ::cefUnpack.name + "_${osName}_debug_symbols",
+          cef_binaries_base,
+          cefUnpackDebugSymbolsDir
+  )
+  cefDownload.dependsOn(downloadSymbols)
+  cefUnpack.dependsOn(unpackSymbols)
+
+
   artifacts.add(cef_include.name, includeDir) { builtBy(unpackTask) }
-  artifacts.add(cef_debug.name, debugDir) { builtBy(unpackTask) }
+  artifacts.add(cef_debug.name, debugDir) { builtBy(unpackTask, unpackSymbols) }
+  artifacts.add(cef_debug_symbols.name, cefUnpackDebugSymbolsDir) { builtBy(unpackSymbols) }
   artifacts.add(cef_release.name, releaseDir) { builtBy(unpackTask) }
 
   if (os == OS.Mac) {

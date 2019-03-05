@@ -21,8 +21,8 @@ class ClientCefConfigurationsImpl(
 
   val Executable.cefBinariesConfiguration
     get() = when (buildType) {
-      NativeBuildType.DEBUG -> cef_debug
-      NativeBuildType.RELEASE -> cef_release
+      NativeBuildType.DEBUG -> listOf(cef_debug, cef_debug_symbols)
+      NativeBuildType.RELEASE -> listOf(cef_release)
     }
 
   val Executable.cefBinariesDirHack
@@ -69,6 +69,12 @@ private fun setupBundle(cef: ClientCefConfigurationsImpl, executable: Executable
 
         from(cefBinariesDir) {
           into("Contents/Frameworks")
+        }
+
+        if (buildType == NativeBuildType.DEBUG) {
+          from(cefUnpackDebugSymbolsDir) {
+            into("Contents/Frameworks")
+          }
         }
 
         from(outputDirectory) {
