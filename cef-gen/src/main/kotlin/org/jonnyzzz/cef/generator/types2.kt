@@ -53,13 +53,14 @@ private fun GeneratorParameters.generateStructWrapper(info: CefTypeInfo) : TypeS
 
 private fun GeneratorParameters.generateImplBase(info: CefTypeInfo, clazz: ClassDescriptor) : TypeSpec.Builder = info.run {
   val cValueInit = CodeBlock.builder()
-          .beginControlFlow("cValue").apply {
+          .beginControlFlow("cValue")
+          .addStatement("memset(ptr, 0, %T.size.convert())", kStructTypeName)
+          .apply {
             when {
               clazz.isCefBased -> addStatement("cef.base.size = %T.size.convert()", kStructTypeName)
               else -> addStatement("cef.size = %T.size.convert()", kStructTypeName)
             }
           }
-
           .addStatement("stablePtr.value = stableRef.asCPointer()")
           .also { code ->
             for (p in clazz.allFunctionalProperties(this@generateImplBase, this)) {
@@ -89,6 +90,14 @@ private fun GeneratorParameters.generateImplBase(info: CefTypeInfo, clazz: Class
               code.endControlFlow()
               code.addStatement("")
             }
+          }
+          .also { code ->
+            clazz.allMeaningfulProperties()
+                    .filter { !it.isVar}
+                    .filter { it.type.toTypeName() == ClassName("org.jonnyzzz.cef.interop", "_cef_string_utf16_t")}
+                    .forEach { p ->
+                      code.addStatement("safe_cef_string_clear(cef.${p.name}.ptr)")
+                    }
           }
           .endControlFlow()
           .build()
@@ -175,6 +184,7 @@ private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = Ce
           .addImport("kotlinx.cinterop", "cValue", "value", "convert", "useContents", "memberAt", "ptr", "reinterpret", "invoke", "pointed", "staticCFunction", "asStableRef")
           .addImport("org.jonnyzzz.cef", "value", "asString", "copyFrom")
           .addImport("org.jonnyzzz.cef.generated", "copyFrom")
+          .addImport("platform.posix", "memset")
           .addAnnotation(AnnotationSpec.builder(Suppress::class).addMember("%S", "unused").build())
 
   val kInterface = TypeSpec.interfaceBuilder(kInterfaceName)
