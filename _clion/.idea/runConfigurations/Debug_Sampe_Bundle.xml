@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Debug Sampe Bundle" type="CMakeRunConfiguration" factoryName="Application" WORKING_DIR="file://$PROJECT_DIR$/../cef-sample/build/bin/macosX64/debugExecutable.apps/cef-sample.app/Contents/MacOS" PASS_PARENT_ENVS_2="true" CONFIG_NAME="Debug" RUN_PATH="$PROJECT_DIR$/../cef-sample/build/bin/macosX64/debugExecutable.apps/cef-sample.app/Contents/MacOS/cef-sample.kexe" EXPLICIT_BUILD_TARGET_NAME="all">
+    <method v="2">
+      <option name="Gradle.BeforeRunTask" enabled="true" tasks="buildDebugBundle_cef-sample" externalProjectPath="$PROJECT_DIR$/../cef-sample" vmOptions="" scriptParameters="" />
+    </method>
+  </configuration>
+</component>
