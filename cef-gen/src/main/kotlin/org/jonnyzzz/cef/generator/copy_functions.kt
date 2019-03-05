@@ -43,7 +43,6 @@ fun GeneratorParameters.generateCopyFunction(clazz: ClassDescriptor): KotlinType
                           .addMember("%S", "NOTHING_TO_INLINE")
                           .build()
                   )
-                  .addAnnotation(ClassName("kotlin", "ExperimentalUnsignedTypes"))
                   .addKdoc("Performs deep copy of all\n" +
                            "fields of the [target] structure\n" +
                            "into the receiver structure")
