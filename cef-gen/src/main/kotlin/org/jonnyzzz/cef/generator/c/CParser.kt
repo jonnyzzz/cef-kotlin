@@ -19,7 +19,7 @@ fun parseCFile(includeFile: File,
           .mapIndexed { id, it -> Line(id, it) }
           .let { filterMacros(it.iterator()) }
 
-  val iterator = fileLines.iterator()
+  val iterator = fileLines.iterator().asPushBack()
   val blocks = parseBlocks(iterator)
   if (iterator.hasNext()) {
     error("File $includeFileName was not fully parsed ${iterator.asSequence().joinToString("\n")}")

@@ -1,7 +1,7 @@
 package org.jonnyzzz.cef.generator.c
 
 
-fun parseBlocks(lines: Iterator<Line>) : List<BracketsTreeNode> {
+fun parseBlocks(lines: PushBackIterator<Line>) : List<BracketsTreeNode> {
   val result = mutableListOf<BracketsTreeNode>()
 
   loop@ while(true) {
@@ -21,7 +21,7 @@ fun parseBlocks(lines: Iterator<Line>) : List<BracketsTreeNode> {
         break@loop
       }
 
-      text.trim().startsWith("///") -> {
+      text.trim().startsWith("//") -> {
         result += readCommentNodes(line, lines)
       }
 
@@ -55,18 +55,21 @@ private fun readBracesNodes(firstLine: Line, lines: Iterator<Line>) : BracesNode
   return BracesNode(result)
 }
 
-private fun readCommentNodes(firstLine: Line, lines: Iterator<Line>): DocCommentNode {
+private fun readCommentNodes(firstLine: Line, lines: PushBackIterator<Line>): DocCommentNode {
   val comments = mutableListOf(firstLine)
   while (true) {
-    val line = lines.nextOrNull()
-            ?: error("Unexpected end of file inside doc-comment: $firstLine, $comments")
+    val line = lines.nextOrNull() ?: break
 
     val text = line.text
-    comments += line
 
-    if (text.trim().startsWith("///")) {
-      return DocCommentNode(comments)
+    if (!text.trim().startsWith("//")) {
+      lines.pushBack(line)
+      break
     }
+
+    comments += line
   }
+
+  return DocCommentNode(comments)
 }
 
