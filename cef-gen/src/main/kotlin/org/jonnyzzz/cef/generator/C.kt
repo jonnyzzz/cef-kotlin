@@ -1,7 +1,5 @@
 package org.jonnyzzz.cef.generator
 
-import org.antlr.v4.runtime.RuleContext
-import org.jonnyzzz.cef.gen.c.CParser
 import java.io.File
 
 
@@ -11,6 +9,25 @@ fun main() {
   processCIncludeFile(testFile)
 }
 
+private interface OurStringBuilder {
+  fun appendln(x: Any)
+  fun appendln(suffix: String, x: Any)
+}
+
+private fun buildString(builder: OurStringBuilder.() -> Unit) : String {
+  val strings = mutableListOf<String>()
+  object:OurStringBuilder {
+    override fun appendln(suffix: String, x: Any) {
+      x.toString().split("\n").mapTo(strings) { "$suffix$it" }
+    }
+
+    override fun appendln(x: Any) {
+      strings += x.toString()
+    }
+
+  }.builder()
+  return strings.joinToString("\n")
+}
 
 data class Line(val no: Int, val text: String) {
   override fun toString() = "${no.toString().padStart(5)}: $text"
@@ -21,15 +38,23 @@ sealed class BracketsTreeNode {
     override fun toString() = "L$line"
   }
 
+  data class DocCommentNode(val lines: List<Line>) : BracketsTreeNode() {
+    override fun toString() = buildString {
+      lines.forEach {
+        appendln("D", it)
+      }
+    }
+  }
+
   data class BlockNode(val openLine: Line,
                        val closeLine: Line,
                        val children: List<BracketsTreeNode>) : BracketsTreeNode() {
     override fun toString() = buildString {
-      appendln("BO$openLine")
+      appendln("BO", openLine)
       children.forEach {
-        appendln("B$it")
+        appendln("B", it)
       }
-      appendln("BC$closeLine")
+      appendln("BC", closeLine)
     }
   }
 }
@@ -57,6 +82,22 @@ private fun parseBlocks(lines: Iterator<Line>) : List<BracketsTreeNode> {
       text.contains("}") -> {
         result += BracketsTreeNode.LeafNode(line)
         break@loop
+      }
+
+      text.trim().startsWith("///") -> {
+        val comments = mutableListOf(line)
+        while(true) {
+          @Suppress("NAME_SHADOWING")
+          val line = lines.nextOrNull() ?: break
+          @Suppress("NAME_SHADOWING")
+          val text = line.text
+          comments += line
+
+          if (text.trim().startsWith("///")) {
+            result += BracketsTreeNode.DocCommentNode(comments)
+            break
+          }
+        }
       }
 
       else -> result += BracketsTreeNode.LeafNode(line)
@@ -136,7 +177,7 @@ private fun processCIncludeFile(includeFile: File) {
   println(unit)*/
 }
 
-
+/*
 object AstPrinter {
   fun print(ctx: RuleContext) {
     explore(ctx, 0)
@@ -155,4 +196,4 @@ object AstPrinter {
       }
     }
   }
-}
+}*/
