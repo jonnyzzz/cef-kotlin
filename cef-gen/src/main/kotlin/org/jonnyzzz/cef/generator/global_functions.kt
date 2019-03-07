@@ -20,7 +20,11 @@ fun GeneratorParameters.generateValFunctions(props: List<PropertyDescriptor>) {
 }
 
 private fun GeneratorParameters.generateValFunctionsPointer(prop: PropertyDescriptor, poet: FileSpec.Builder) {
-  val (fSpec, fParams) = detectFunctionProperty(prop, "safe_" + prop.name) ?: return
+  val propName = prop.name.asString().split("_").run {
+    first() + drop(1).joinToString("") { it.capitalize() }
+  }
+
+  val (fSpec, fParams) = detectFunctionProperty(prop, propName) ?: return
   val originalName = prop.fqNameSafe.asString()
 
   fSpec.addStatement("return ($originalName!!)(${fParams.joinToString(", ") { it.paramName }})")

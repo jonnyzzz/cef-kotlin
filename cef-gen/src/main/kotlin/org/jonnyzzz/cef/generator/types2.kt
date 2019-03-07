@@ -187,7 +187,7 @@ private fun GeneratorParameters.generateImplBase(info: CefKNTypeInfo, clazz: Cla
 private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = cefTypeInfo(clazz).run {
   val poet = FileSpec.builder(
           cefGeneratedPackage,
-          "___TEST_${clazz.name.asString()}"
+          sourceFileName
   )
           .addImport("kotlinx.cinterop", "cValue", "value", "convert", "useContents", "memberAt", "ptr", "reinterpret", "invoke", "pointed", "staticCFunction", "asStableRef")
           .addImport("org.jonnyzzz.cef", "value", "asString", "copyFrom")

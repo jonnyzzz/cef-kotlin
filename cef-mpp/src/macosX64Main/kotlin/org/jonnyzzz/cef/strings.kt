@@ -6,11 +6,11 @@ import kotlinx.cinterop.cstr
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
-import org.jonnyzzz.cef.generated.safe_cef_string_from_utf8
+import org.jonnyzzz.cef.generated.cefStringFromUtf8
 import org.jonnyzzz.cef.interop.cef_string_t
 
 fun cef_string_t.copyFrom(str: String) : Unit = memScoped {
-  safe_cef_string_from_utf8(str.cstr.ptr, length.convert(), ptr)
+  cefStringFromUtf8(str.cstr.ptr, length.convert(), ptr)
 }
 
 fun cef_string_t.asString() : String = "TODO(implement cef_string_t.asString())"

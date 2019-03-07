@@ -1,7 +1,6 @@
 package org.jonnyzzz.cef.generator
 
 import com.squareup.kotlinpoet.AnnotationSpec
-import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
@@ -17,26 +16,29 @@ import org.jetbrains.kotlin.types.TypeSubstitution
 private const val copyMethodName = "copyFrom"
 
 fun GeneratorParameters.generateCopyFunctions(clazzez: List<ClassDescriptor>) {
+
+  val poet = FileSpec.builder(
+          "org.jonnyzzz.cef.generated",
+          "copy_helpers"
+  ).addAnnotation(AnnotationSpec.builder(Suppress::class).addMember("%S", "unused").build())
+
+
   copyFromTypes = clazzez.mapNotNull {
     if (it.name.asString() != "sched_param" && it.getSuperClassNotAny()?.classId == ClassId.fromString("kotlinx/cinterop/CStructVar")) {
       println("${it.name.asString()} - generate")
-      generateCopyFunction(it)
+      generateCopyFunction(it, poet)
     } else {
       println("${it.name.asString()} - SKIP")
       null
     }
   }.toSet()
+
+  poet.build().writeTo(outputDir)
 }
 
-
-fun GeneratorParameters.generateCopyFunction(clazz: ClassDescriptor): KotlinType? {
+private fun generateCopyFunction(clazz: ClassDescriptor, poet: FileSpec.Builder): KotlinType? {
   val className = clazz.toClassName()
-
-
-  val poet = FileSpec.builder(
-          "org.jonnyzzz.cef.generated",
-          "copy_" + className.simpleName
-  ).addFunction(
+  poet.addFunction(
           FunSpec.builder(copyMethodName)
                   .addModifiers(KModifier.INLINE)
                   .addAnnotation(AnnotationSpec.builder(Suppress::class)
@@ -44,8 +46,8 @@ fun GeneratorParameters.generateCopyFunction(clazz: ClassDescriptor): KotlinType
                           .build()
                   )
                   .addKdoc("Performs deep copy of all\n" +
-                           "fields of the [target] structure\n" +
-                           "into the receiver structure")
+                          "fields of the [target] structure\n" +
+                          "into the receiver structure")
                   .receiver(className)
                   .addParameter("target", className)
                   .apply {
@@ -62,9 +64,7 @@ fun GeneratorParameters.generateCopyFunction(clazz: ClassDescriptor): KotlinType
                             }
                   }
                   .build()
-  ).build()
-
-  poet.writeTo(outputDir)
+  )
 
   return clazz.defaultType
 }
