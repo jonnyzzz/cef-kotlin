@@ -47,7 +47,7 @@ data class StructFunctionPointer(
       functionName = fullText.split(")", limit = 2)[0].split("CEF_CALLBACK*", limit = 2)[1]
       arguments = fullText.split(")(", limit = 2)[1].split(")")[0].split(",")
     } catch (t: Throwable) {
-      throw Error("${t.message} in $fullText", t)
+      throw Error("${t.message} in text at ${block.lines.first().no}:\n$fullText", t)
     }
   }
 }
@@ -99,7 +99,7 @@ fun lookupStructs(tree: List<BracketsTreeNode>) = sequence {
                 parseStructMembers(node.children)
         )
       } catch (t: Throwable) {
-        throw Error("Failed to parse struct typedef $node. ${t.message}", t)
+        throw Error("Failed to parse struct typedef in\n$node", t)
       })
     }
 
@@ -120,7 +120,7 @@ private fun parseStructMembers(blockNodes: List<BracketsTreeNode>) = sequence<St
       yield(try {
         StructFunctionPointer(node, prevCommentNode ?: error("no doc-comment block"))
       } catch (t: Throwable) {
-        throw Error("Failed to parse struct typedef $node. ${t.message}", t)
+        throw Error("Failed to parse struct function pointer in\n$node$", t)
       })
     }
 
@@ -128,7 +128,7 @@ private fun parseStructMembers(blockNodes: List<BracketsTreeNode>) = sequence<St
       yield(try {
         StructField(node, prevCommentNode ?: error("no doc-comment block"))
       } catch (t: Throwable) {
-        throw Error("Failed to parse struct typedef $node. ${t.message}", t)
+        throw Error("Failed to parse struct field in\n$node", t)
       })
     }
 
