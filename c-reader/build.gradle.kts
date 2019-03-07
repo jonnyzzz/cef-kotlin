@@ -29,8 +29,7 @@ val generatedSrc = buildDir / "generated-src" / "antlr" / "main"
 
 val generateGrammarSource = tasks.getByName<AntlrTask>("generateGrammarSource"){
   dependsOn(download)
-  arguments.addAll(listOf("-package", packageName, "-visitor", "-long-messages"))
-//  outputDirectory = generatedSrc / packageName.replace(".", "/") / "c"
+  arguments = arguments + listOf("-package", packageName, "-visitor", "-long-messages")
 }
 
 tasks.getByName("compileJava").dependsOn(generateGrammarSource)
