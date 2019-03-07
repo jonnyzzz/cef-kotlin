@@ -77,6 +77,8 @@ private fun GeneratorParameters.generateImplBase(info: CefKNTypeInfo, clazz: Cla
                       (listOf(p.THIS) + p.parameters).joinToString(", ") { it.paramName } + " ->"
               )
 
+              code.addStatement("initRuntimeIfNeeded()")
+
               //   val pThis = THIS!!.reinterpret<KCefBeforeDownloadCallbackStruct>()
               //                    .pointed
               //                    .stablePtr
@@ -193,6 +195,7 @@ private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = ce
           .addImport("org.jonnyzzz.cef", "value", "asString", "copyFrom")
           .addImport("org.jonnyzzz.cef.generated", "copyFrom")
           .addImport("kotlin.native.concurrent", "isFrozen")
+          .addImport("kotlin.native", "initRuntimeIfNeeded")
           .addImport("platform.posix", "memset")
           .addAnnotation(AnnotationSpec.builder(Suppress::class).addMember("%S", "unused").build())
 

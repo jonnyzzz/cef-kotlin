@@ -1,7 +1,6 @@
 package org.jonnyzzz.cef.example
 
 import kotlinx.cinterop.CPointer
-import kotlinx.cinterop.DeferScope
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.allocArrayOf
 import kotlinx.cinterop.cstr
@@ -11,7 +10,6 @@ import org.jonnyzzz.cef.generated.KCefAppImplBase
 import org.jonnyzzz.cef.generated.KCefBrowserProcessHandlerImplBase
 import org.jonnyzzz.cef.generated.KCefSettingsImplBase
 import org.jonnyzzz.cef.interop.*
-import kotlin.native.concurrent.freeze
 import kotlin.system.exitProcess
 
 
@@ -65,6 +63,5 @@ fun main(args: Array<String>): Unit = memScoped {
 
   cef_shutdown()
   println("cef_shutdown - complete")
-
 }
 
