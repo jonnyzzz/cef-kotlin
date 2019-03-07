@@ -100,7 +100,7 @@ fun ClassDescriptor.allFunctionalProperties(props: GeneratorParameters, info: Ce
     val THIS = DetectedFunctionParam("THIS", firstParam)
     val fParams = funType.dropLast(1).drop(1).mapIndexed { idx, paramType ->
       DetectedFunctionParam(
-              cefFunction?.arguments?.getOrNull(idx)?.name ?: "p$idx",
+              cefFunction?.arguments?.getOrNull(idx + 1)?.name ?: "p$idx",
               paramType
       ).replaceToKotlinTypes()
     }
