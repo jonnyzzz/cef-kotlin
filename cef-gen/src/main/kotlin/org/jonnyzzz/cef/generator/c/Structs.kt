@@ -41,10 +41,8 @@ data class StructFunctionPointer(
   init {
     val fullText = block.fullText.trim().replace(Regex("\\)\\s+\\("), ")(")
     try {
-      if (!fullText.contains("CEF_CALLBACK*")) error("Only CEF_CALLBACK function pointers are allowed")
-
       returnType = fullText.split("(",limit = 2)[0].split(" ").joinToString(" ") { it.trim() }
-      this.name = fullText.split(")", limit = 2)[0].split("CEF_CALLBACK*", limit = 2)[1].trim()
+      name = fullText.split(")", limit = 2)[0].split("(", limit = 2)[1].trim().removePrefix("CEF_CALLBACK").trim().removePrefix("*").trim()
       arguments = fullText.split(")(", limit = 2)[1].split(")")[0].split(",").map { it.asFunArgument() }
     } catch (t: Throwable) {
       throw Error("${t.message} in text at ${block.lines.first().no}:\n$fullText", t)
@@ -95,7 +93,7 @@ fun lookupStructs(tree: List<BracketsTreeNode>) = sequence {
       yield(try {
         StructNode(
                 node,
-                prevCommentNode ?: error("no doc-comment block"),
+                prevCommentNode ?: DocCommentNode(listOf()),
                 parseStructMembers(node.children)
         )
       } catch (t: Throwable) {
@@ -118,7 +116,7 @@ private fun parseStructMembers(blockNodes: List<BracketsTreeNode>) = sequence<St
 
     if (node is BracesNode) {
       yield(try {
-        StructFunctionPointer(node, prevCommentNode ?: error("no doc-comment block"))
+        StructFunctionPointer(node, prevCommentNode ?: DocCommentNode(listOf()))
       } catch (t: Throwable) {
         throw Error("Failed to parse struct function pointer in\n$node$", t)
       })

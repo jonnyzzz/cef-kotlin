@@ -118,7 +118,7 @@ private fun GeneratorParameters.resolveCefCDeclarations() {
   cefDeclarations = loadCefDeclarations(cefIncludesDir)
 }
 
-fun GeneratorParameters.resolveCefBaseRefCounted(classes: List<ClassDescriptor>) {
+private fun GeneratorParameters.resolveCefBaseRefCounted(classes: List<ClassDescriptor>) {
   cefBaseClassDescriptor = classes.first { it.toClassName() == cefBaseRefCounted }
   cefBaseClassDescriptorInfo = cefTypeInfo(cefBaseClassDescriptor)
 }

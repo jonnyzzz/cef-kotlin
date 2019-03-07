@@ -10,8 +10,8 @@ fun filterMacros(lines: Iterator<Line>) = sequence {
     if (line.text.trim().startsWith("#define")) continue
     if (line.text.trim().startsWith("#pragma")) continue
 
-    if (line.text.trim().startsWith("#else")) error("Not supported line $line")
-    if (line.text.trim().startsWith("#elsif")) error("Not supported line $line")
+    if (line.text.trim().startsWith("#else")) continue
+    if (line.text.trim().startsWith("#elsif")) continue
 
     if (line.text.trim().startsWith("#ifdef")) {
       while (true) {

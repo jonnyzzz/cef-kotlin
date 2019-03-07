@@ -48,7 +48,7 @@ fun lookupGlobalFunctions(tree: List<BracketsTreeNode>) = sequence {
     if (node is BracesNode && node.fullText.trim().startsWith("CEF_EXPORT")) {
 
       val functionNode = try {
-        GlobalFunctionNode(node, prevCommentNode ?: error("no doc-comment block"))
+        GlobalFunctionNode(node, prevCommentNode ?: DocCommentNode(listOf()))
       } catch (t: Throwable) {
         throw Error("Failed to parse global function $node. ${t.message}", t)
       }

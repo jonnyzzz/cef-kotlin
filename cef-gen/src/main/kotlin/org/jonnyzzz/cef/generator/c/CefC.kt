@@ -57,7 +57,10 @@ fun loadCefDeclarations(includesDir: File): CefDeclarations {
   val allHeaders = Files.walk((includesDir / "capi").toPath())
           .map { it.toFile() }
           .filter { it.isFile && it.name.endsWith(".h") }
-          .toList() + includesDir / "internal/cef_types.h"
+          .toList() +
+          includesDir / "internal/cef_types.h" +
+          includesDir / "internal/cef_types_mac.h" +
+          includesDir / "internal/cef_string_types.h"
 
   val fileInfos = allHeaders.map { header ->
     try {
