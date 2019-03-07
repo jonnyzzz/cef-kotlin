@@ -1,6 +1,8 @@
 package org.jonnyzzz.cef.generator.c
 
-sealed class StructMember
+sealed class StructMember : CDocumented {
+  abstract val name: String
+}
 
 data class StructField(
         private val line: LeafNode,
@@ -14,7 +16,7 @@ data class StructField(
   }
 
   val type: String
-  val name: String
+  override val name: String
 
   init {
     val text = line.line.text.trim().split(" ").map { it.trim() }
@@ -34,6 +36,7 @@ data class StructFunctionPointer(
     appendln(block)
   }
 
+  override val name by this::functionName
   override val returnType: String
   override val functionName: String
   override val arguments: List<String>
@@ -44,7 +47,7 @@ data class StructFunctionPointer(
       if (!fullText.contains("CEF_CALLBACK*")) error("Only CEF_CALLBACK function pointers are allowed")
 
       returnType = fullText.split("(",limit = 2)[0].split(" ").joinToString(" ") { it.trim() }
-      functionName = fullText.split(")", limit = 2)[0].split("CEF_CALLBACK*", limit = 2)[1]
+      functionName = fullText.split(")", limit = 2)[0].split("CEF_CALLBACK*", limit = 2)[1].trim()
       arguments = fullText.split(")(", limit = 2)[1].split(")")[0].split(",")
     } catch (t: Throwable) {
       throw Error("${t.message} in text at ${block.lines.first().no}:\n$fullText", t)
@@ -55,7 +58,7 @@ data class StructFunctionPointer(
 data class StructNode(
         private val structBlock: BlockNode,
         private val comment: DocCommentNode,
-        val members: List<StructMember>
+        val members: Map<String, StructMember>
 ) {
   override fun toString() = ourBuildString {
     appendln(comment)
@@ -134,4 +137,4 @@ private fun parseStructMembers(blockNodes: List<BracketsTreeNode>) = sequence<St
 
     prevCommentNode = if (node is DocCommentNode) node else null
   }
-}.toList()
+}.groupBy { it.name }.mapValues { it.value.single() }.toSortedMap()

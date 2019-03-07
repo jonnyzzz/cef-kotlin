@@ -24,7 +24,7 @@ data class GlobalFunctionNode(
         if (returnTypeAndName.size < 3) error("Unexpected global function line")
         if (returnTypeAndName.first() != "CEF_EXPORT") error("No CEF_EXPORT found")
 
-        functionName = returnTypeAndName.last()
+        functionName = returnTypeAndName.last().trim()
         returnType = returnTypeAndName.drop(1).dropLast(1).joinToString(" ")
       }
 

@@ -7,8 +7,8 @@ data class LeafNode(val line: Line) : BracketsTreeNode() {
   override fun toString() = "L$line"
 }
 
-private fun List<Line>.joinToString() = joinToString("") {
-  it.text.replace("///", "").replace("//", "").trim()
+private fun List<Line>.joinToString() = joinToString(" ") {
+  it.text.replace("///", " ").replace("//", " ").trim()
 }.replace(Regex("\\s\\s+"), " ").trim()
 
 

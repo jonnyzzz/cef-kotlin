@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperInterfaces
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
+import org.jonnyzzz.cef.generator.c.loadCefDeclarations
 import java.io.File
 import java.util.*
 
@@ -37,10 +38,11 @@ private fun mainImpl(args: Array<String>) {
   println("  the part similar to https://bitbucket.org/chromiumembedded/cef/src/master/tools/translator.README.txt")
   println()
   println("usage:")
-  println(" <too> cef.klib <outputDir>")
+  println(" <too> cef.klib <cef_includes> <outputDir>")
 
   val klibPath = args.getOrNull(0)?.let { File(it).absoluteFile } ?: error("Failed to find .klib")
-  val outputDir = args.getOrNull(1)?.let { File(it).absoluteFile } ?: error("Failed to find target directory")
+  val cefIncludesDir = args.getOrNull(1)?.let { File(it).absoluteFile } ?: error("Failed to find CEF includes dir")
+  val outputDir = args.getOrNull(2)?.let { File(it).absoluteFile } ?: error("Failed to find target directory")
   val stdlibPath = File(System.getProperty("user.home")) / ".konan" / "kotlin-native-macos-1.1.2" / "klib" / "common" / "stdlib"
 
   val stdlib = createKonanLibrary(
@@ -69,7 +71,7 @@ private fun mainImpl(args: Array<String>) {
   stdlibModule.setDependencies(listOf(stdlibModule))
   module.setDependencies(listOf(module, stdlibModule))
 
-  val generatorParams = GeneratorParameters(outputDir)
+  val generatorParams = GeneratorParameters(cefIncludesDir, outputDir)
   generatorParams.visitModule(module)
 }
 
@@ -102,12 +104,17 @@ private fun GeneratorParameters.visitModule(module: ModuleDescriptor) {
 
   println("------------\n\n\n")
 
+  resolveCefCDeclarations()
   resolveCefBaseRefCounted(descriptors.filterIsInstance<ClassDescriptor>())
   collectAllEnums(descriptors.filterIsInstance<ClassDescriptor>())
   generateCopyFunctions(descriptors.filterIsInstance<ClassDescriptor>())
   generateValFunctions(descriptors.filterIsInstance<PropertyDescriptor>())
   generateTypes(descriptors.filterIsInstance<ClassDescriptor>())
   generateTypes2(descriptors.filterIsInstance<ClassDescriptor>())
+}
+
+private fun GeneratorParameters.resolveCefCDeclarations() {
+  cefDeclarations = loadCefDeclarations(cefIncludesDir)
 }
 
 fun GeneratorParameters.resolveCefBaseRefCounted(classes: List<ClassDescriptor>) {

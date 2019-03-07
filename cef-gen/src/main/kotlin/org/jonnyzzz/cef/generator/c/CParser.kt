@@ -70,7 +70,7 @@ private fun debugStructs(structs: List<StructNode>) {
     println(struct.structTypeName)
     println(struct.typedefTypeName)
     println()
-    for (member in struct.members) {
+    for (member in struct.members.values) {
       println()
       println(member)
       println()

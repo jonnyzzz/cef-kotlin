@@ -1,5 +1,6 @@
 import org.jetbrains.kotlin.gradle.plugin.*
 import org.jonnyzzz.cef.gradle.div
+import org.jonnyzzz.cef.gradle.setupCefConfigurations
 
 plugins {
   kotlin("jvm")
@@ -37,18 +38,24 @@ configure<ApplicationPluginConvention> {
   mainClassName = "org.jonnyzzz.cef.generator.MainKt"
 }
 
+setupCefConfigurations {
+  tasks.getByName<JavaExec>("run") {
+    dependsOn(cef_include)
 
-tasks.getByName<JavaExec>("run") {
-  val targetDir = project(":cef-mpp").buildDir / "generated-cef"
-  val klibFile = project(":cef-mpp").buildDir / "classes/kotlin/macosX64/main/cef-mpp-cinterop-kotlinCefInterop.klib"
+    val targetDir = project(":cef-mpp").buildDir / "generated-cef"
+    val klibFile = project(":cef-mpp").buildDir / "classes/kotlin/macosX64/main/cef-mpp-cinterop-kotlinCefInterop.klib"
+    val cefIncludes = includeDir / "include"
 
-  doFirst {
-    delete(targetDir)
+    doFirst {
+      delete(targetDir)
+    }
+
+    args = listOf(
+            //TODO: ugly paths!
+            klibFile.path,
+            cefIncludes.path,
+            targetDir.path
+    )
   }
 
-  args = listOf(
-          //TODO: ugly paths!
-          klibFile.path,
-          targetDir.path
-  )
 }

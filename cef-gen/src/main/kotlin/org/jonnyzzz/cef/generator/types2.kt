@@ -189,6 +189,11 @@ private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = Ce
 
   val kInterface = TypeSpec.interfaceBuilder(kInterfaceName)
 
+  val cefCStruct = cefDeclarations.findStruct(clazz)
+
+  cefCStruct?.struct?.docComment?.let {
+    kInterface.addKdoc(it)
+  }
 
   //do we really need that base interface explicitly?
   /*
@@ -198,6 +203,11 @@ private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = Ce
 
   clazz.allFunctionalProperties(this@generateType2, this).filter { it.visibleInInterface }.forEach { p ->
     val fSpec = FunSpec.builder(p.funName)
+
+    cefCStruct?.findFunction(p)?.docComment?.let {
+      fSpec.addKdoc(it)
+    }
+
 
     p.parameters.forEach {
       fSpec.addParameter(it.paramName, it.paramType)
