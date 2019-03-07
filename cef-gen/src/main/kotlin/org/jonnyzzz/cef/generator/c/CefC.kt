@@ -1,7 +1,7 @@
 package org.jonnyzzz.cef.generator.c
 
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jonnyzzz.cef.generator.FunctionalPropertyDescriptor
+import org.jonnyzzz.cef.generator.CefPropertyName
 import org.jonnyzzz.cef.generator.div
 import java.io.File
 import java.nio.file.Files
@@ -21,7 +21,7 @@ class CefStruct(
 ) : CDocumented {
   override val docComment by struct::docComment
 
-  fun findFunction(p: FunctionalPropertyDescriptor) = struct.members[p.cFieldName]
+  fun findFunction(p: CefPropertyName) = struct.members[p.cFieldName]
 }
 
 class CefDeclarations(
@@ -56,7 +56,7 @@ fun loadCefDeclarations(includesDir: File): CefDeclarations {
   val allHeaders = Files.walk((includesDir / "capi").toPath())
           .map { it.toFile() }
           .filter { it.isFile && it.name.endsWith(".h") }
-          .toList()
+          .toList() + includesDir / "internal/cef_types.h"
 
   val fileInfos = allHeaders.map { header ->
     try {

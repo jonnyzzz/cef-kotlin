@@ -219,8 +219,13 @@ private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = Ce
   }
 
   clazz.allFieldProperties(this@generateType2).filter { it.visibleInInterface }.forEach { p ->
-    val spec = PropertySpec.builder(p.propName, p.propType).mutable(true)
-    kInterface.addProperty(spec.build())
+    val pSpec = PropertySpec.builder(p.propName, p.propType).mutable(true)
+
+    cefCStruct?.findFunction(p)?.docComment?.let {
+      pSpec.addKdoc(it)
+    }
+
+    kInterface.addProperty(pSpec.build())
   }
 
   poet.addType(kInterface.build())

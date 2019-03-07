@@ -66,13 +66,13 @@ fun detectFunctionProperty(prop: PropertyDescriptor, funName: String): DetectedF
 
 
 data class FunctionalPropertyDescriptor(
-        val cFieldName : String,
+        override val cFieldName : String,
         val funName: String,
         val THIS: DetectedFunctionParam,
         val parameters: List<DetectedFunctionParam>,
         val returnType: TypeName,
         val visibleInInterface : Boolean = true
-)
+) : CefPropertyName
 
 
 fun ClassDescriptor.allFunctionalProperties(props: GeneratorParameters, info: CefTypeInfo = CefTypeInfo(this)) : List<FunctionalPropertyDescriptor> {

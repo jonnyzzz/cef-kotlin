@@ -6,6 +6,10 @@ import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.types.TypeSubstitution
 
 
+interface CefPropertyName {
+  val cFieldName : String
+}
+
 fun ClassDescriptor.allMeaningfulProperties() =
         getMemberScope(TypeSubstitution.EMPTY).getContributedDescriptors()
                 .filter { it.shouldBePrinted }
@@ -14,13 +18,13 @@ fun ClassDescriptor.allMeaningfulProperties() =
 
 
 data class FieldPropertyDescriptor(
-        val cFieldName : String,
+        override val cFieldName : String,
         val propName: String,
         val propType: TypeName,
         //the C declared type name, before type mapping
         override val originalTypeName: TypeName? = null,
         val visibleInInterface : Boolean = true
-) : TypeReplaceableHost<FieldPropertyDescriptor> {
+) : TypeReplaceableHost<FieldPropertyDescriptor>, CefPropertyName {
   override val type: TypeName
     get() = propType
 

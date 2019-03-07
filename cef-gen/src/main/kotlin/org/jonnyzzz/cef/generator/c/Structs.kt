@@ -129,7 +129,7 @@ private fun parseStructMembers(blockNodes: List<BracketsTreeNode>) = sequence<St
 
     if (node is LeafNode) {
       yield(try {
-        StructField(node, prevCommentNode ?: error("no doc-comment block"))
+        StructField(node, prevCommentNode ?: DocCommentNode(listOf()))
       } catch (t: Throwable) {
         throw Error("Failed to parse struct field in\n$node", t)
       })
