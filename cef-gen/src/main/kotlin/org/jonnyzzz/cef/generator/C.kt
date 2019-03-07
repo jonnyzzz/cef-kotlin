@@ -1,6 +1,8 @@
 package org.jonnyzzz.cef.generator
 
 import org.jonnyzzz.cef.generator.c.Line
+import org.jonnyzzz.cef.generator.c.StructField
+import org.jonnyzzz.cef.generator.c.StructFunctionPointer
 import org.jonnyzzz.cef.generator.c.filterMacros
 import org.jonnyzzz.cef.generator.c.lookupGlobalFunctions
 import org.jonnyzzz.cef.generator.c.lookupStructs
@@ -62,6 +64,17 @@ private fun processCIncludeFile(includeFile: File) {
     for (member in struct.members) {
       println()
       println(member)
+      println()
+      when(member) {
+        is StructField -> {
+          println("//${member.docComment}")
+          println("${member.type} ${member.name}")
+        }
+        is StructFunctionPointer -> {
+          println("//${member.docComment}")
+          println("${member.returnType} ${member.functionName} ${member.arguments}")
+        }
+      }
     }
   }
 }

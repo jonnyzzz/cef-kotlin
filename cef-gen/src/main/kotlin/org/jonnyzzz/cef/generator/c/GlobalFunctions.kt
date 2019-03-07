@@ -4,17 +4,17 @@ package org.jonnyzzz.cef.generator.c
 data class GlobalFunctionNode(
         private val function: BracesNode,
         private val comment: DocCommentNode
-) {
+) : CFunction {
   override fun toString() = ourBuildString {
     appendln(comment)
     appendln(function)
   }
 
-  val docComment = comment.commentText
+  override val docComment by comment::commentText
 
-  val returnType: String
-  val functionName: String
-  val arguments : List<String>
+  override val returnType: String
+  override val functionName: String
+  override val arguments : List<String>
 
   init {
     val fullText = function.fullText

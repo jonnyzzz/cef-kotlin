@@ -5,24 +5,50 @@ sealed class StructMember
 data class StructField(
         private val line: LeafNode,
         private val comment: DocCommentNode
-) : StructMember() {
-  val docComment = comment.commentText
+) : StructMember(), CDocumented {
+  override val docComment by comment::commentText
 
   override fun toString() = ourBuildString {
     appendln(comment)
     appendln(line)
+  }
+
+  val type: String
+  val name: String
+
+  init {
+    val text = line.line.text.trim().split(" ").map { it.trim() }
+    type = text.dropLast(1).joinToString(" ") { it.trim() }
+    name = text.last().trim().removeSuffix(";").trim()
   }
 }
 
 data class StructFunctionPointer(
         private val block: BracesNode,
         private val comment: DocCommentNode
-) : StructMember() {
-  val docComment = comment.commentText
+) : StructMember(), CFunction {
+  override val docComment by comment::commentText
 
   override fun toString() = ourBuildString {
     appendln(comment)
     appendln(block)
+  }
+
+  override val returnType: String
+  override val functionName: String
+  override val arguments: List<String>
+
+  init {
+    val fullText = block.fullText.trim().replace(Regex("\\)\\s+\\("), ")(")
+    try {
+      if (!fullText.contains("CEF_CALLBACK*")) error("Only CEF_CALLBACK function pointers are allowed")
+
+      returnType = fullText.split("(",limit = 2)[0].split(" ").joinToString(" ") { it.trim() }
+      functionName = fullText.split(")", limit = 2)[0].split("CEF_CALLBACK*", limit = 2)[1]
+      arguments = fullText.split(")(", limit = 2)[1].split(")")[0].split(",")
+    } catch (t: Throwable) {
+      throw Error("${t.message} in $fullText", t)
+    }
   }
 }
 
@@ -82,7 +108,7 @@ fun lookupStructs(tree: List<BracketsTreeNode>) = sequence {
 }.toList()
 
 
-private fun parseStructMembers(blockNodes: List<BracketsTreeNode>) = sequence {
+private fun parseStructMembers(blockNodes: List<BracketsTreeNode>) = sequence<StructMember> {
   val nodes = blockNodes.iterator()
 
   var prevCommentNode: DocCommentNode? = null
