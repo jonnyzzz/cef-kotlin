@@ -14,7 +14,7 @@ data class GlobalFunctionNode(
 
   override val returnType: String
   override val name: String
-  override val arguments : List<String>
+  override val arguments : List<CFunctionArgument>
 
   init {
     val fullText = function.fullText
@@ -28,7 +28,7 @@ data class GlobalFunctionNode(
         returnType = returnTypeAndName.drop(1).dropLast(1).joinToString(" ")
       }
 
-      arguments = fullText.split("(", limit = 2)[1].split(")", limit = 2)[0].split(",")
+      arguments = fullText.split("(", limit = 2)[1].split(")", limit = 2)[0].split(",").map { it.asFunArgument() }
     } catch (t: Throwable) {
       throw Error("${t.message} in $fullText", t)
     }

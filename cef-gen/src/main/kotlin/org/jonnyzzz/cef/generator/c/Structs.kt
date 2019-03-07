@@ -1,6 +1,7 @@
 package org.jonnyzzz.cef.generator.c
 
 sealed class StructMember : CNamed, CDocumented
+
 data class StructField(
         private val line: LeafNode,
         private val comment: DocCommentNode
@@ -35,7 +36,7 @@ data class StructFunctionPointer(
 
   override val returnType: String
   override val name: String
-  override val arguments: List<String>
+  override val arguments: List<CFunctionArgument>
 
   init {
     val fullText = block.fullText.trim().replace(Regex("\\)\\s+\\("), ")(")
@@ -44,7 +45,7 @@ data class StructFunctionPointer(
 
       returnType = fullText.split("(",limit = 2)[0].split(" ").joinToString(" ") { it.trim() }
       this.name = fullText.split(")", limit = 2)[0].split("CEF_CALLBACK*", limit = 2)[1].trim()
-      arguments = fullText.split(")(", limit = 2)[1].split(")")[0].split(",")
+      arguments = fullText.split(")(", limit = 2)[1].split(")")[0].split(",").map { it.asFunArgument() }
     } catch (t: Throwable) {
       throw Error("${t.message} in text at ${block.lines.first().no}:\n$fullText", t)
     }

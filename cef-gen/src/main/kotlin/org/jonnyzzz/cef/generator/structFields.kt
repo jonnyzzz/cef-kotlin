@@ -4,6 +4,7 @@ import com.squareup.kotlinpoet.TypeName
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.types.TypeSubstitution
+import org.jonnyzzz.cef.generator.c.StructField
 
 
 fun ClassDescriptor.allMeaningfulProperties() =
@@ -14,13 +15,14 @@ fun ClassDescriptor.allMeaningfulProperties() =
 
 
 data class FieldPropertyDescriptor(
-        override val cFieldName : String,
+        val cFieldName : String,
         val propName: String,
         val propType: TypeName,
+        val cefMember: StructField?,
         //the C declared type name, before type mapping
         override val originalTypeName: TypeName? = null,
         val visibleInInterface : Boolean = true
-) : TypeReplaceableHost<FieldPropertyDescriptor>, CefPropertyName {
+) : TypeReplaceableHost<FieldPropertyDescriptor> {
   override val type: TypeName
     get() = propType
 
@@ -28,6 +30,8 @@ data class FieldPropertyDescriptor(
 }
 
 fun ClassDescriptor.allFieldProperties(props: GeneratorParameters, info: CefTypeInfo = CefTypeInfo(this)) : List<FieldPropertyDescriptor> {
+  val cefCStruct = props.cefDeclarations.findStruct(this)
+
   val allFunctions = allFunctionalProperties(props, info).map { it.cFieldName }.toSet()
 
   return allMeaningfulProperties().mapNotNull { p ->
@@ -38,7 +42,8 @@ fun ClassDescriptor.allFieldProperties(props: GeneratorParameters, info: CefType
       first() + drop(1).joinToString("") { it.capitalize() }
     }
 
-    FieldPropertyDescriptor(name, propName, p.type.toTypeName()).replaceToKotlinTypes()
+    val cefMember = cefCStruct?.findField(p)
+    FieldPropertyDescriptor(name, propName, p.type.toTypeName(), cefMember).replaceToKotlinTypes()
   }
 }
 

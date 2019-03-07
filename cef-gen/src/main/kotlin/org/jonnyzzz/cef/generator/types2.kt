@@ -204,7 +204,7 @@ private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = Ce
   clazz.allFunctionalProperties(this@generateType2, this).filter { it.visibleInInterface }.forEach { p ->
     val fSpec = FunSpec.builder(p.funName)
 
-    cefCStruct?.findFunction(p)?.docComment?.let {
+    p.cefFunctionPointer?.docComment?.let {
       fSpec.addKdoc(it)
     }
 
@@ -221,7 +221,7 @@ private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = Ce
   clazz.allFieldProperties(this@generateType2).filter { it.visibleInInterface }.forEach { p ->
     val pSpec = PropertySpec.builder(p.propName, p.propType).mutable(true)
 
-    cefCStruct?.findFunction(p)?.docComment?.let {
+    p.cefMember?.docComment?.let {
       pSpec.addKdoc(it)
     }
 

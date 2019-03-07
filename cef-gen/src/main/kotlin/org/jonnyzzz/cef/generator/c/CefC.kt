@@ -1,7 +1,7 @@
 package org.jonnyzzz.cef.generator.c
 
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jonnyzzz.cef.generator.CefPropertyName
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jonnyzzz.cef.generator.div
 import java.io.File
 import java.nio.file.Files
@@ -21,7 +21,8 @@ class CefStruct(
 ) : CDocumented {
   override val docComment by struct::docComment
 
-  fun findFunction(p: CefPropertyName) = struct.members[p.cFieldName]
+  fun findField(p: PropertyDescriptor) = struct.members[p.name.asString()] as? StructField
+  fun findFunction(p: PropertyDescriptor) = struct.members[p.name.asString()] as? StructFunctionPointer
 }
 
 class CefDeclarations(

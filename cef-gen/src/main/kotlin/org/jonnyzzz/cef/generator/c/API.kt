@@ -10,6 +10,10 @@ interface CNamed {
 
 interface CFunction : CDocumented, CNamed {
   val returnType: String
-  val arguments: List<String>
+  val arguments: List<CFunctionArgument>
 }
 
+data class CFunctionArgument(
+        override val name: String,
+        val type: String
+) : CNamed

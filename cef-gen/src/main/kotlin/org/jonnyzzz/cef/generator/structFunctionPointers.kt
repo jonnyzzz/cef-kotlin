@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.resolve.descriptorUtil.classId
 import org.jetbrains.kotlin.types.SimpleType
+import org.jonnyzzz.cef.generator.c.StructFunctionPointer
 
 
 data class DetectedFunctionParam(
@@ -66,16 +67,20 @@ fun detectFunctionProperty(prop: PropertyDescriptor, funName: String): DetectedF
 
 
 data class FunctionalPropertyDescriptor(
-        override val cFieldName : String,
+        val cFieldName : String,
         val funName: String,
         val THIS: DetectedFunctionParam,
         val parameters: List<DetectedFunctionParam>,
         val returnType: TypeName,
+        val cefFunctionPointer: StructFunctionPointer?,
         val visibleInInterface : Boolean = true
-) : CefPropertyName
+)
 
 
 fun ClassDescriptor.allFunctionalProperties(props: GeneratorParameters, info: CefTypeInfo = CefTypeInfo(this)) : List<FunctionalPropertyDescriptor> {
+
+  val cefCStruct = props.cefDeclarations.findStruct(this)
+
   val selfProperties = allMeaningfulProperties().mapNotNull { p ->
     val name = p.name.asString()
     val propName = name.split("_").run {
@@ -83,6 +88,8 @@ fun ClassDescriptor.allFunctionalProperties(props: GeneratorParameters, info: Ce
     }
 
     val funType = detectFunctionPropertyType(p) ?: return@mapNotNull null
+
+    val cefFunction = cefCStruct?.findFunction(p)
 
     val firstParam = funType.firstOrNull()
     require(firstParam != null && firstParam == info.rawStruct.asNullableCPointer()) {
@@ -92,10 +99,13 @@ fun ClassDescriptor.allFunctionalProperties(props: GeneratorParameters, info: Ce
     val fReturnType = funType.last()
     val THIS = DetectedFunctionParam("THIS", firstParam)
     val fParams = funType.dropLast(1).drop(1).mapIndexed { idx, paramType ->
-      DetectedFunctionParam("p$idx", paramType).replaceToKotlinTypes()
+      DetectedFunctionParam(
+              cefFunction?.arguments?.getOrNull(idx)?.name ?: "p$idx",
+              paramType
+      ).replaceToKotlinTypes()
     }
 
-    FunctionalPropertyDescriptor(name, propName, THIS,fParams, fReturnType )
+    FunctionalPropertyDescriptor(name, propName, THIS,fParams, fReturnType, cefFunction)
   }
 
   if (isCefBased) {
