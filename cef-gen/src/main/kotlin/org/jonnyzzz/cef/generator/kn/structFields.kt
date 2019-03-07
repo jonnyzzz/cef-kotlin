@@ -1,10 +1,13 @@
-package org.jonnyzzz.cef.generator
+package org.jonnyzzz.cef.generator.kn
 
 import com.squareup.kotlinpoet.TypeName
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.types.TypeSubstitution
+import org.jonnyzzz.cef.generator.GeneratorParameters
 import org.jonnyzzz.cef.generator.c.StructField
+import org.jonnyzzz.cef.generator.shouldBePrinted
+import org.jonnyzzz.cef.generator.toTypeName
 
 
 fun ClassDescriptor.allMeaningfulProperties() =

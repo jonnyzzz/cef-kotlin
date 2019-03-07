@@ -10,6 +10,12 @@ import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jonnyzzz.cef.generator.kn.CefTypeInfo
+import org.jonnyzzz.cef.generator.kn.allFieldProperties
+import org.jonnyzzz.cef.generator.kn.allFunctionalProperties
+import org.jonnyzzz.cef.generator.kn.allMeaningfulProperties
+import org.jonnyzzz.cef.generator.kn.fromCefToKotlin
+import org.jonnyzzz.cef.generator.kn.isCefBased
 
 
 fun GeneratorParameters.generateTypes2(clazzez: List<ClassDescriptor>) {

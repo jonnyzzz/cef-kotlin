@@ -5,7 +5,7 @@ import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
-import org.jonnyzzz.cef.generator.c.loadCefDeclarations
+import org.jonnyzzz.cef.generator.kn.detectFunctionProperty
 
 fun GeneratorParameters.generateValFunctions(props: List<PropertyDescriptor>) {
   val poet = FileSpec.builder(

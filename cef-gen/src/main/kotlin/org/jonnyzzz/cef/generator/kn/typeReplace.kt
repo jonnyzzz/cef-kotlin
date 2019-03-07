@@ -1,6 +1,9 @@
-package org.jonnyzzz.cef.generator
+package org.jonnyzzz.cef.generator.kn
 
 import com.squareup.kotlinpoet.TypeName
+import org.jonnyzzz.cef.generator.asNullableCPointer
+import org.jonnyzzz.cef.generator.cefString16
+import org.jonnyzzz.cef.generator.kotlinString
 
 
 interface TypeReplaceableHost<T> {

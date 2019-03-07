@@ -1,4 +1,4 @@
-package org.jonnyzzz.cef.generator
+package org.jonnyzzz.cef.generator.kn
 
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.TypeName
@@ -7,7 +7,10 @@ import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.resolve.descriptorUtil.classId
 import org.jetbrains.kotlin.types.SimpleType
+import org.jonnyzzz.cef.generator.GeneratorParameters
+import org.jonnyzzz.cef.generator.asNullableCPointer
 import org.jonnyzzz.cef.generator.c.StructFunctionPointer
+import org.jonnyzzz.cef.generator.toTypeName
 
 
 data class DetectedFunctionParam(
@@ -105,7 +108,7 @@ fun ClassDescriptor.allFunctionalProperties(props: GeneratorParameters, info: Ce
       ).replaceToKotlinTypes()
     }
 
-    FunctionalPropertyDescriptor(name, propName, THIS,fParams, fReturnType, cefFunction)
+    FunctionalPropertyDescriptor(name, propName, THIS, fParams, fReturnType, cefFunction)
   }
 
   if (isCefBased) {

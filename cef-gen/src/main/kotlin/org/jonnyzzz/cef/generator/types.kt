@@ -15,6 +15,9 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.classId
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeSubstitution
+import org.jonnyzzz.cef.generator.kn.CefTypeInfo
+import org.jonnyzzz.cef.generator.kn.detectFunctionProperty
+import org.jonnyzzz.cef.generator.kn.isCefBased
 
 
 fun GeneratorParameters.generateTypes(clazzez: List<ClassDescriptor>) {
