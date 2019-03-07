@@ -13,7 +13,7 @@ data class GlobalFunctionNode(
   override val docComment by comment::commentText
 
   override val returnType: String
-  override val functionName: String
+  override val name: String
   override val arguments : List<String>
 
   init {
@@ -24,7 +24,7 @@ data class GlobalFunctionNode(
         if (returnTypeAndName.size < 3) error("Unexpected global function line")
         if (returnTypeAndName.first() != "CEF_EXPORT") error("No CEF_EXPORT found")
 
-        functionName = returnTypeAndName.last().trim()
+        name = returnTypeAndName.last().trim()
         returnType = returnTypeAndName.drop(1).dropLast(1).joinToString(" ")
       }
 

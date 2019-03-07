@@ -30,7 +30,7 @@ class CefDeclarations(
 
   val functions: Map<String, CefFunction> = run {
     files.flatMap { file ->
-      file.globalFunctions.map { it.functionName to CefFunction(file, it) }
+      file.globalFunctions.map { it.name to CefFunction(file, it) }
     }.groupBy { it.first }.mapValues { it.value.single().second }
   }.toSortedMap()
 

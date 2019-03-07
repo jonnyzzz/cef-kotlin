@@ -4,9 +4,12 @@ interface CDocumented {
   val docComment: String
 }
 
-interface CFunction : CDocumented {
+interface CNamed {
+  val name : String
+}
+
+interface CFunction : CDocumented, CNamed {
   val returnType: String
-  val functionName: String
   val arguments: List<String>
 }
 

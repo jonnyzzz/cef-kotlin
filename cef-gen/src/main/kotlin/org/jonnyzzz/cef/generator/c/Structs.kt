@@ -1,9 +1,6 @@
 package org.jonnyzzz.cef.generator.c
 
-sealed class StructMember : CDocumented {
-  abstract val name: String
-}
-
+sealed class StructMember : CNamed, CDocumented
 data class StructField(
         private val line: LeafNode,
         private val comment: DocCommentNode
@@ -36,9 +33,8 @@ data class StructFunctionPointer(
     appendln(block)
   }
 
-  override val name by this::functionName
   override val returnType: String
-  override val functionName: String
+  override val name: String
   override val arguments: List<String>
 
   init {
@@ -47,7 +43,7 @@ data class StructFunctionPointer(
       if (!fullText.contains("CEF_CALLBACK*")) error("Only CEF_CALLBACK function pointers are allowed")
 
       returnType = fullText.split("(",limit = 2)[0].split(" ").joinToString(" ") { it.trim() }
-      functionName = fullText.split(")", limit = 2)[0].split("CEF_CALLBACK*", limit = 2)[1].trim()
+      this.name = fullText.split(")", limit = 2)[0].split("CEF_CALLBACK*", limit = 2)[1].trim()
       arguments = fullText.split(")(", limit = 2)[1].split(")")[0].split(",")
     } catch (t: Throwable) {
       throw Error("${t.message} in text at ${block.lines.first().no}:\n$fullText", t)

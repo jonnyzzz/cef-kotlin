@@ -6,10 +6,6 @@ import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.types.TypeSubstitution
 
 
-interface CefPropertyName {
-  val cFieldName : String
-}
-
 fun ClassDescriptor.allMeaningfulProperties() =
         getMemberScope(TypeSubstitution.EMPTY).getContributedDescriptors()
                 .filter { it.shouldBePrinted }

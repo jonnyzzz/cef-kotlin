@@ -53,7 +53,7 @@ private fun debugFunctions(globalFunctions: List<GlobalFunctionNode>) {
     println(globalFunction)
     println()
     println("//${globalFunction.docComment}")
-    println(globalFunction.returnType +" " + globalFunction.functionName + " " + globalFunction.arguments)
+    println(globalFunction.returnType +" " + globalFunction.name + " " + globalFunction.arguments)
     println()
   }
   println("=================")
@@ -81,7 +81,7 @@ private fun debugStructs(structs: List<StructNode>) {
         }
         is StructFunctionPointer -> {
           println("//${member.docComment}")
-          println("${member.returnType} ${member.functionName} ${member.arguments}")
+          println("${member.returnType} ${member.name} ${member.arguments}")
         }
       }
     }
