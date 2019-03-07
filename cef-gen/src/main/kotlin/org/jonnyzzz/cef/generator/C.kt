@@ -136,6 +136,34 @@ private fun filterMacros(lines: Iterator<Line>) = sequence {
   }
 }
 
+data class GlobalFunctionNode(
+        val function: BracketsTreeNode.LeafNode,
+        val comment: BracketsTreeNode.DocCommentNode
+) {
+  override fun toString() = buildString {
+    appendln(comment)
+    appendln(function)
+  }
+}
+
+private fun lookupGlobalFunctions(tree: List<BracketsTreeNode>) = sequence {
+  val nodes = tree
+          .filterNot { it is BracketsTreeNode.BlockNode }
+          .iterator()
+
+  var prevCommentNode : BracketsTreeNode.DocCommentNode? = null
+
+  while(true) {
+    val node = nodes.nextOrNull() ?: break
+
+    if (node is BracketsTreeNode.LeafNode && node.line.text.trim().startsWith("CEF_EXPORT")) {
+      yield(GlobalFunctionNode(node, prevCommentNode ?: error("Global function without comment: $node")))
+    }
+
+    prevCommentNode = if (node is BracketsTreeNode.DocCommentNode) node else null
+  }
+}.toList()
+
 
 private fun processCIncludeFile(includeFile: File) {
   val includeFileName = includeFile.nameWithoutExtension
@@ -154,6 +182,17 @@ private fun processCIncludeFile(includeFile: File) {
   blocks.forEach {
     println(it)
   }
+
+  println("=================")
+  println()
+  println()
+
+  val globalFunctions = lookupGlobalFunctions(blocks)
+  for (globalFunction in globalFunctions) {
+    println()
+    println(globalFunction)
+  }
+
 
 /*
   val testFileData = includeFile.readText()
