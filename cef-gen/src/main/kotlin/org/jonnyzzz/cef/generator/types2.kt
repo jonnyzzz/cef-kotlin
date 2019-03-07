@@ -21,7 +21,7 @@ import org.jonnyzzz.cef.generator.kn.isCefBased
 fun GeneratorParameters.generateTypes2(clazzez: List<ClassDescriptor>) {
   clazzez.forEach {
 
-    if (it.name.asString() in setOf("_cef_base_ref_counted_t", "_cef_app_t", "_cef_before_download_callback_t", "_cef_settings_t")) {
+    if (it.name.asString() in setOf("_cef_browser_process_handler_t", "_cef_base_ref_counted_t", "_cef_app_t", "_cef_before_download_callback_t", "_cef_settings_t")) {
       generateType2(it)
     }
 
@@ -104,7 +104,7 @@ private fun GeneratorParameters.generateImplBase(info: CefKNTypeInfo, clazz: Cla
                     .filter { !it.isVar}
                     .filter { it.type.toTypeName() == ClassName("org.jonnyzzz.cef.interop", "_cef_string_utf16_t")}
                     .forEach { p ->
-                      code.addStatement("safe_cef_string_clear(cef.${p.name}.ptr)")
+                      code.addStatement("cefStringClear(cef.${p.name}.ptr)")
                     }
           }
           .endControlFlow()
@@ -138,7 +138,7 @@ private fun GeneratorParameters.generateImplBase(info: CefKNTypeInfo, clazz: Cla
           .addProperty(PropertySpec
                   .builder("stableRef", ParameterizedTypeName.run { stableRef.parameterizedBy(kImplBaseTypeName) })
                   .addModifiers(KModifier.PRIVATE)
-                  .initializer("%T.create(this).also { defer.defer { it.dispose() } }", stableRef)
+                  .initializer("%T.create(this).also { defer.defer {  if (!isFrozen) it.dispose() } }", stableRef)
                   .build()
                   )
 
@@ -192,6 +192,7 @@ private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = ce
           .addImport("kotlinx.cinterop", "cValue", "value", "convert", "useContents", "memberAt", "ptr", "reinterpret", "invoke", "pointed", "staticCFunction", "asStableRef")
           .addImport("org.jonnyzzz.cef", "value", "asString", "copyFrom")
           .addImport("org.jonnyzzz.cef.generated", "copyFrom")
+          .addImport("kotlin.native.concurrent", "isFrozen")
           .addImport("platform.posix", "memset")
           .addAnnotation(AnnotationSpec.builder(Suppress::class).addMember("%S", "unused").build())
 
