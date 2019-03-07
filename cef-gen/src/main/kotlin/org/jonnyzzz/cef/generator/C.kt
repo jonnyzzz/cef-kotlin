@@ -85,27 +85,29 @@ private fun parseBlocks(lines: Iterator<Line>) : List<BracketsTreeNode> {
       }
 
       text.trim().startsWith("///") -> {
-        val comments = mutableListOf(line)
-        while(true) {
-          @Suppress("NAME_SHADOWING")
-          val line = lines.nextOrNull() ?: break
-          @Suppress("NAME_SHADOWING")
-          val text = line.text
-          comments += line
-
-          if (text.trim().startsWith("///")) {
-            result += BracketsTreeNode.DocCommentNode(comments)
-            break
-          }
-        }
+        result += readCommentNodes(line, lines)
       }
 
       else -> result += BracketsTreeNode.LeafNode(line)
     }
   }
 
-
   return result
+}
+
+private fun readCommentNodes(firstLine: Line, lines: Iterator<Line>): BracketsTreeNode.DocCommentNode {
+  val comments = mutableListOf(firstLine)
+  while (true) {
+    val line = lines.nextOrNull()
+            ?: error("Unexpected end of file inside doc-comment: $firstLine, $comments")
+
+    val text = line.text
+    comments += line
+
+    if (text.trim().startsWith("///")) {
+      return BracketsTreeNode.DocCommentNode(comments)
+    }
+  }
 }
 
 private fun filterMacros(lines: Iterator<Line>) = sequence {
