@@ -13,6 +13,12 @@ data class DocCommentNode(val lines: List<Line>) : BracketsTreeNode() {
       appendln("D", it)
     }
   }
+
+  val commentText by lazy {
+    lines.joinToString("") {
+      it.text.replace("///", "").replace("//", "").trim()
+    }.replace(Regex("\\s\\s+"), " ")
+  }
 }
 
 data class BlockNode(val openLine: Line,

@@ -40,5 +40,9 @@ private fun processCIncludeFile(includeFile: File) {
   for (globalFunction in globalFunctions) {
     println()
     println(globalFunction)
+    println()
+    println(globalFunction.returnType +" " + globalFunction.functionName + " " + globalFunction.arguments)
+    println()
+
   }
 }
