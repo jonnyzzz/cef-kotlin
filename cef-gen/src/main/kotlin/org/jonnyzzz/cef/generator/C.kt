@@ -59,5 +59,9 @@ private fun processCIncludeFile(includeFile: File) {
     println(struct.structTypeName)
     println(struct.typedefTypeName)
     println()
+    for (member in struct.members) {
+      println()
+      println(member)
+    }
   }
 }
