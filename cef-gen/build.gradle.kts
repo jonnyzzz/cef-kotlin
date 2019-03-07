@@ -30,8 +30,6 @@ dependencies {
   implementation("org.jetbrains.kotlin:kotlin-native-utils:$kotlinVersion")
   implementation("com.squareup:kotlinpoet:1.1.0")
   
-  implementation(project(":c-reader"))
-  
   testImplementation("junit:junit:4.12")
 }
 
