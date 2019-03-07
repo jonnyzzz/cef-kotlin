@@ -7,6 +7,11 @@ data class LeafNode(val line: Line) : BracketsTreeNode() {
   override fun toString() = "L$line"
 }
 
+private fun List<Line>.joinToString() = joinToString("") {
+  it.text.replace("///", "").replace("//", "").trim()
+}.replace(Regex("\\s\\s+"), " ").trim()
+
+
 data class DocCommentNode(val lines: List<Line>) : BracketsTreeNode() {
   override fun toString() = ourBuildString {
     lines.forEach {
@@ -14,11 +19,7 @@ data class DocCommentNode(val lines: List<Line>) : BracketsTreeNode() {
     }
   }
 
-  val commentText by lazy {
-    lines.joinToString("") {
-      it.text.replace("///", "").replace("//", "").trim()
-    }.replace(Regex("\\s\\s+"), " ")
-  }
+  val commentText by lazy { lines.joinToString() }
 }
 
 data class BlockNode(val openLine: Line,
@@ -33,3 +34,12 @@ data class BlockNode(val openLine: Line,
   }
 }
 
+data class BracesNode(val lines: List<Line>) : BracketsTreeNode() {
+  override fun toString() = ourBuildString {
+    lines.forEach {
+      appendln("P", it)
+    }
+  }
+
+  val fullText by lazy { lines.joinToString() }
+}

@@ -25,11 +25,34 @@ fun parseBlocks(lines: Iterator<Line>) : List<BracketsTreeNode> {
         result += readCommentNodes(line, lines)
       }
 
+      text.trim().contains("(") -> {
+        result += readBracesNodes(line, lines)
+      }
+
       else -> result += LeafNode(line)
     }
   }
 
   return result
+}
+
+private fun readBracesNodes(firstLine: Line, lines: Iterator<Line>) : BracesNode {
+  fun Line.openCount() = text.count { it == '(' }
+  fun Line.closeCount() = text.count { it == ')' }
+
+  val result = mutableListOf(firstLine)
+  var openCount = firstLine.openCount()
+  var closeCount = firstLine.closeCount()
+
+  while(openCount != closeCount) {
+    val next = lines.nextOrNull() ?: error("Failed to find ) in the: $result")
+    result += next
+
+    openCount += next.openCount()
+    closeCount += next.closeCount()
+  }
+
+  return BracesNode(result)
 }
 
 private fun readCommentNodes(firstLine: Line, lines: Iterator<Line>): DocCommentNode {

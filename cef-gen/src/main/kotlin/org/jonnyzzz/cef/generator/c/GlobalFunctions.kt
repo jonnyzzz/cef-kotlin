@@ -2,8 +2,8 @@ package org.jonnyzzz.cef.generator.c
 
 
 data class GlobalFunctionNode(
-        val function: LeafNode,
-        val comment: DocCommentNode
+        private val function: BracesNode,
+        private val comment: DocCommentNode
 ) {
   override fun toString() = ourBuildString {
     appendln(comment)
@@ -17,20 +17,21 @@ data class GlobalFunctionNode(
   val arguments : List<String>
 
   init {
-    val tokens = function.line.text.trim().split(" ", limit = 3)
-    if (tokens.size <= 3) error("Unexpected global function line")
-    val (export, type, nameAndParams) = tokens
-    if (export != "CEF_EXPORT") error("No CEF_EXPORT found")
-    returnType = type
+    val fullText = function.fullText
+    try {
 
-    val nameAndParamsClean = nameAndParams.split(")")
-    if (nameAndParamsClean.size != 2) error("Too many ) in the declaration")
+      fullText.split("(")[0].split(" ").let { returnTypeAndName ->
+        if (returnTypeAndName.size < 3) error("Unexpected global function line")
+        if (returnTypeAndName.first() != "CEF_EXPORT") error("No CEF_EXPORT found")
 
-    val nameAndParamsInside = nameAndParams.split("(")
-    if (nameAndParamsInside.size != 2) error("Too many ( in the declaration")
-    functionName = nameAndParamsInside[0]
+        functionName = returnTypeAndName.last()
+        returnType = returnTypeAndName.drop(1).dropLast(1).joinToString(" ")
+      }
 
-    arguments = nameAndParamsInside[1].split(",")
+      arguments = fullText.split("(", limit = 2)[1].split(")", limit = 2)[0].split(",")
+    } catch (t: Throwable) {
+      throw Error("${t.message} in $fullText", t)
+    }
   }
 }
 
@@ -44,7 +45,7 @@ fun lookupGlobalFunctions(tree: List<BracketsTreeNode>) = sequence {
   while (true) {
     val node = nodes.nextOrNull() ?: break
 
-    if (node is LeafNode && node.line.text.trim().startsWith("CEF_EXPORT")) {
+    if (node is BracesNode && node.fullText.trim().startsWith("CEF_EXPORT")) {
 
       val functionNode = try {
         GlobalFunctionNode(node, prevCommentNode ?: error("no doc-comment block"))

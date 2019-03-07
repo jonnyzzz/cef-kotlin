@@ -41,8 +41,8 @@ private fun processCIncludeFile(includeFile: File) {
     println()
     println(globalFunction)
     println()
+    println("//${globalFunction.docComment}")
     println(globalFunction.returnType +" " + globalFunction.functionName + " " + globalFunction.arguments)
     println()
-
   }
 }
