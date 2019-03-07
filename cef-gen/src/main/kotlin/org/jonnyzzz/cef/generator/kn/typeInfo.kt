@@ -17,3 +17,10 @@ val ClassDescriptor.isCefBased: Boolean
               it.returnType?.toTypeName() == cefBaseRefCounted
             } ?: false
   }
+
+fun ClassDescriptor.allMeaningfulProperties() =
+        getMemberScope(TypeSubstitution.EMPTY).getContributedDescriptors()
+                .filter { it.shouldBePrinted }
+                .filterIsInstance<PropertyDescriptor>()
+                .filter { it.name.asString() !in setOf("size", "base") }
+

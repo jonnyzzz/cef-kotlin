@@ -11,9 +11,8 @@ import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jonnyzzz.cef.generator.kn.CefKNTypeInfo
+import org.jonnyzzz.cef.generator.kn.addKdoc
 import org.jonnyzzz.cef.generator.kn.cefTypeInfo
-import org.jonnyzzz.cef.generator.kn.allFieldProperties
-import org.jonnyzzz.cef.generator.kn.allFunctionalProperties
 import org.jonnyzzz.cef.generator.kn.allMeaningfulProperties
 import org.jonnyzzz.cef.generator.kn.fromCefToKotlin
 import org.jonnyzzz.cef.generator.kn.isCefBased
@@ -40,7 +39,9 @@ private fun GeneratorParameters.generateStructWrapper(info: CefKNTypeInfo) : Typ
           .addSuperclassConstructorParameter("rawPtr")
           .addType(TypeSpec.companionObjectBuilder()
                   .superclass(ClassName("kotlinx.cinterop", "CStructVar.Type"))
-                  .addSuperclassConstructorParameter("%T.size + %T.size, %T.align", rawStruct, cOpaquePointerVar, rawStruct).build())
+                  .addSuperclassConstructorParameter("%T.size + %T.size, %T.align", rawStruct, cOpaquePointerVar, rawStruct).build()
+          )
+
           .addProperty(
                   PropertySpec
                           .builder("cef", rawStruct)
@@ -70,7 +71,7 @@ private fun GeneratorParameters.generateImplBase(info: CefKNTypeInfo, clazz: Cla
           }
           .addStatement("stablePtr.value = stableRef.asCPointer()")
           .also { code ->
-            for (p in clazz.allFunctionalProperties(this@generateImplBase, this)) {
+            for (p in info.functionProperties) {
               code.beginControlFlow("cef.${p.cFieldName} = staticCFunction")
               code.addStatement(
                       (listOf(p.THIS) + p.parameters).joinToString(", ") { it.paramName } + " ->"
@@ -150,7 +151,7 @@ private fun GeneratorParameters.generateImplBase(info: CefKNTypeInfo, clazz: Cla
 
 
           .also { type ->
-            clazz.allFieldProperties(this@generateImplBase).forEach { p ->
+            info.fieldProperties.forEach { p ->
               val spec = PropertySpec
                       .builder(p.propName, p.propType, KModifier.OVERRIDE).mutable(true)
                       .getter(FunSpec
@@ -194,13 +195,7 @@ private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = ce
           .addImport("platform.posix", "memset")
           .addAnnotation(AnnotationSpec.builder(Suppress::class).addMember("%S", "unused").build())
 
-  val kInterface = TypeSpec.interfaceBuilder(kInterfaceTypeName)
-
-  val cefCStruct = cefDeclarations.findStruct(clazz)
-
-  cefCStruct?.struct?.docComment?.let {
-    kInterface.addKdoc(it)
-  }
+  val kInterface = TypeSpec.interfaceBuilder(kInterfaceTypeName).addKdoc(this)
 
   //do we really need that base interface explicitly?
   /*
@@ -208,13 +203,8 @@ private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = ce
     type.addSuperinterface(cefTypeInfo(cefBaseRefCounted).kInterfaceTypeName)
   }*/
 
-  clazz.allFunctionalProperties(this@generateType2, this).filter { it.visibleInInterface }.forEach { p ->
-    val fSpec = FunSpec.builder(p.funName)
-
-    p.cefFunctionPointer?.docComment?.let {
-      fSpec.addKdoc(it)
-    }
-
+  functionProperties.filter { it.visibleInInterface }.forEach { p ->
+    val fSpec = FunSpec.builder(p.funName).addKdoc(p)
 
     p.parameters.forEach {
       fSpec.addParameter(it.paramName, it.paramType)
@@ -225,13 +215,8 @@ private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = ce
     kInterface.addFunction(fSpec.build())
   }
 
-  clazz.allFieldProperties(this@generateType2).filter { it.visibleInInterface }.forEach { p ->
-    val pSpec = PropertySpec.builder(p.propName, p.propType).mutable(true)
-
-    p.cefMember?.docComment?.let {
-      pSpec.addKdoc(it)
-    }
-
+  fieldProperties.filter { it.visibleInInterface }.forEach { p ->
+    val pSpec = PropertySpec.builder(p.propName, p.propType).mutable(true).addKdoc(p)
     kInterface.addProperty(pSpec.build())
   }
 
@@ -242,40 +227,3 @@ private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = ce
 
   poet.build().writeTo()
 }
-
-/*
-*
-*
-private class KCefBeforeDownloadCallbackStruct(rawPtr: NativePtr) : CStructVar(rawPtr) {
-    val cef: _cef_before_download_callback_t
-        get() = memberAt(0)
-
-    val stablePtr : COpaquePointerVar
-        get() = memberAt(_cef_before_download_callback_t.size)
-
-    companion object : CStructVar.Type(_cef_before_download_callback_t.size + 8,
-            _cef_before_download_callback_t.align)
-}
-
-@ExperimentalUnsignedTypes
-abstract class KCefBeforeDownloadCallbackBase(scope: DeferScope) : KCefBeforeDownloadCallback {
-    private val stableRef = StableRef.create(this).also { scope.defer { it.dispose() } }
-
-    private val cValue = kotlinx.cinterop.cValue<KCefBeforeDownloadCallbackStruct> {
-        cef.base.size = KCefBeforeDownloadCallbackStruct.size.convert()
-
-        cef.cont = staticCFunction {
-            THIS, p0: CPointer<cef_string_t>?, p1 ->
-
-            val pThis = THIS!!.reinterpret<KCefBeforeDownloadCallbackStruct>()
-                    .pointed
-                    .stablePtr
-                    .value!!
-                    .asStableRef<KCefBeforeDownloadCallbackBase>().get()
-
-            pThis.cont(p0.asString(), p1)
-        }
-    }
-}
-*
-* */
