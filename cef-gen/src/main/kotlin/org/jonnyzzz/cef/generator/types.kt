@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.classId
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeSubstitution
-import org.jonnyzzz.cef.generator.kn.CefTypeInfo
+import org.jonnyzzz.cef.generator.kn.cefTypeInfo
 import org.jonnyzzz.cef.generator.kn.detectFunctionProperty
 import org.jonnyzzz.cef.generator.kn.isCefBased
 
@@ -29,7 +29,7 @@ fun GeneratorParameters.generateTypes(clazzez: List<ClassDescriptor>) {
 }
 
 fun GeneratorParameters.generateType(clazz: ClassDescriptor,
-                                     copyFromTypes: Set<KotlinType>) : Unit = CefTypeInfo(clazz).run {
+                                     copyFromTypes: Set<KotlinType>) : Unit = cefTypeInfo(clazz).run {
   println("Generate Typed Wrapper for $clazz")
 
   val poet = FileSpec.builder(
@@ -53,11 +53,10 @@ fun GeneratorParameters.generateType(clazz: ClassDescriptor,
 */
 
   if (clazz.isCefBased) {
-    val cefBaseInfo = CefTypeInfo(cefBaseRefCounted)
-    type.addSuperinterface(cefBaseInfo.typeClassName)
+    type.addSuperinterface(cefBaseClassDescriptorInfo.typeClassName)
 
     type.addProperty(PropertySpec
-            .builder(cefBaseInfo.pointedName, cefBaseInfo.rawStruct, KModifier.OVERRIDE)
+            .builder(cefBaseClassDescriptorInfo.pointedName, cefBaseClassDescriptorInfo.rawStruct, KModifier.OVERRIDE)
             .getter(FunSpec.getterBuilder().addStatement("return $pointedName.base").build())
             .build()
     )

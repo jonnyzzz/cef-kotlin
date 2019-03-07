@@ -9,27 +9,8 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.classId
 import org.jetbrains.kotlin.types.SimpleType
 import org.jonnyzzz.cef.generator.GeneratorParameters
 import org.jonnyzzz.cef.generator.asNullableCPointer
-import org.jonnyzzz.cef.generator.c.StructFunctionPointer
 import org.jonnyzzz.cef.generator.toTypeName
 
-
-data class DetectedFunctionParam(
-        val paramName: String,
-        val paramType: TypeName,
-        //the C declared type name, before type mapping
-        override val originalTypeName: TypeName? = null
-) : TypeReplaceableHost<DetectedFunctionParam> {
-  override val type: TypeName
-    get() = paramType
-
-  override fun replaceType(newType: TypeName) = copy(originalTypeName = paramType, paramType = newType)
-}
-
-data class DetectedFunction(
-        val funcDeclaration: FunSpec.Builder,
-        val params: List<DetectedFunctionParam>,
-        val returnType: TypeName
-)
 
 fun detectFunctionPropertyType(prop: PropertyDescriptor): List<TypeName>? {
   val returnType = prop.returnType as? SimpleType
@@ -68,19 +49,7 @@ fun detectFunctionProperty(prop: PropertyDescriptor, funName: String): DetectedF
 }
 
 
-
-data class FunctionalPropertyDescriptor(
-        val cFieldName : String,
-        val funName: String,
-        val THIS: DetectedFunctionParam,
-        val parameters: List<DetectedFunctionParam>,
-        val returnType: TypeName,
-        val cefFunctionPointer: StructFunctionPointer?,
-        val visibleInInterface : Boolean = true
-)
-
-
-fun ClassDescriptor.allFunctionalProperties(props: GeneratorParameters, info: CefTypeInfo = CefTypeInfo(this)) : List<FunctionalPropertyDescriptor> {
+fun ClassDescriptor.allFunctionalProperties(props: GeneratorParameters, info: CefKNTypeInfo = props.cefTypeInfo(this)) : List<FunctionalPropertyDescriptor> {
 
   val cefCStruct = props.cefDeclarations.findStruct(this)
 

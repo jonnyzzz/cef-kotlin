@@ -5,6 +5,7 @@ import com.squareup.kotlinpoet.TypeName
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.types.KotlinType
 import org.jonnyzzz.cef.generator.c.CefDeclarations
+import org.jonnyzzz.cef.generator.kn.CefKNTypeInfo
 import java.io.File
 
 data class GeneratorParameters(
@@ -20,4 +21,5 @@ data class GeneratorParameters(
   val copyFromTypeNames: Set<TypeName> get() = copyFromTypes.map { it.toTypeName() }.toSet()
 
   lateinit var cefBaseClassDescriptor: ClassDescriptor
+  lateinit var cefBaseClassDescriptorInfo: CefKNTypeInfo
 }

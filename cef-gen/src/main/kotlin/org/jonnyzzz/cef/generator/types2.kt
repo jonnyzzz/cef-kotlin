@@ -10,7 +10,8 @@ import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jonnyzzz.cef.generator.kn.CefTypeInfo
+import org.jonnyzzz.cef.generator.kn.CefKNTypeInfo
+import org.jonnyzzz.cef.generator.kn.cefTypeInfo
 import org.jonnyzzz.cef.generator.kn.allFieldProperties
 import org.jonnyzzz.cef.generator.kn.allFunctionalProperties
 import org.jonnyzzz.cef.generator.kn.allMeaningfulProperties
@@ -31,7 +32,7 @@ fun GeneratorParameters.generateTypes2(clazzez: List<ClassDescriptor>) {
   }
 }
 
-private fun GeneratorParameters.generateStructWrapper(info: CefTypeInfo) : TypeSpec.Builder = info.run {
+private fun GeneratorParameters.generateStructWrapper(info: CefKNTypeInfo) : TypeSpec.Builder = info.run {
   TypeSpec.classBuilder(kStructTypeName)
           .addModifiers(KModifier.PRIVATE)
           .primaryConstructor(FunSpec.constructorBuilder().addParameter("rawPtr", ClassName("kotlinx.cinterop", "NativePtr")).build())
@@ -57,7 +58,7 @@ private fun GeneratorParameters.generateStructWrapper(info: CefTypeInfo) : TypeS
           )
 }
 
-private fun GeneratorParameters.generateImplBase(info: CefTypeInfo, clazz: ClassDescriptor) : TypeSpec.Builder = info.run {
+private fun GeneratorParameters.generateImplBase(info: CefKNTypeInfo, clazz: ClassDescriptor) : TypeSpec.Builder = info.run {
   val cValueInit = CodeBlock.builder()
           .beginControlFlow("cValue")
           .addStatement("memset(ptr, 0, %T.size.convert())", kStructTypeName)
@@ -118,7 +119,7 @@ private fun GeneratorParameters.generateImplBase(info: CefTypeInfo, clazz: Class
                           .build()
           ).apply {
             if (clazz.isCefBased) {
-              addSuperinterface(CefTypeInfo(cefBaseClassDescriptor).kInterfaceTypeName, CodeBlock.of("%T()", cefBaseRefCountedKImpl))
+              addSuperinterface(cefBaseClassDescriptorInfo.kInterfaceTypeName, CodeBlock.of("%T()", cefBaseRefCountedKImpl))
             }
           }
 
@@ -182,7 +183,7 @@ private fun GeneratorParameters.generateImplBase(info: CefTypeInfo, clazz: Class
 
 }
 
-private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = CefTypeInfo(clazz).run {
+private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = cefTypeInfo(clazz).run {
   val poet = FileSpec.builder(
           cefGeneratedPackage,
           "___TEST_${clazz.name.asString()}"
@@ -193,7 +194,7 @@ private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = Ce
           .addImport("platform.posix", "memset")
           .addAnnotation(AnnotationSpec.builder(Suppress::class).addMember("%S", "unused").build())
 
-  val kInterface = TypeSpec.interfaceBuilder(kInterfaceName)
+  val kInterface = TypeSpec.interfaceBuilder(kInterfaceTypeName)
 
   val cefCStruct = cefDeclarations.findStruct(clazz)
 
@@ -204,7 +205,7 @@ private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = Ce
   //do we really need that base interface explicitly?
   /*
   if (clazz.isCefBased) {
-    type.addSuperinterface(CefTypeInfo(cefBaseRefCounted).kInterfaceTypeName)
+    type.addSuperinterface(cefTypeInfo(cefBaseRefCounted).kInterfaceTypeName)
   }*/
 
   clazz.allFunctionalProperties(this@generateType2, this).filter { it.visibleInInterface }.forEach { p ->

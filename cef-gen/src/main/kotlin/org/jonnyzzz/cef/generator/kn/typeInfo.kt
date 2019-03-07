@@ -1,36 +1,11 @@
 package org.jonnyzzz.cef.generator.kn
 
-import com.squareup.kotlinpoet.ClassName
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.types.TypeSubstitution
 import org.jonnyzzz.cef.generator.cefBaseRefCounted
-import org.jonnyzzz.cef.generator.cefGeneratedPackage
 import org.jonnyzzz.cef.generator.shouldBePrinted
-import org.jonnyzzz.cef.generator.toClassName
 import org.jonnyzzz.cef.generator.toTypeName
-
-
-fun CefTypeInfo(clazz: ClassDescriptor) = CefTypeInfo(clazz.toClassName())
-
-data class CefTypeInfo(
-        val rawStruct: ClassName
-) {
-  val cleanName = rawStruct.simpleName.removePrefix("_").removePrefix("cef").removeSuffix("_t")
-  val typeName = "Cef" + cleanName.split("_").joinToString("") { it.capitalize() }
-
-  val kInterfaceName = "K$typeName"
-  val kInterfaceTypeName = ClassName(cefGeneratedPackage, kInterfaceName)
-
-  val kStructName = "${kInterfaceName}Struct"
-  val kStructTypeName = ClassName(cefGeneratedPackage, kStructName)
-
-  val kImplBaseTypeName = ClassName(cefGeneratedPackage, "${kInterfaceName}ImplBase")
-
-  val pointedName = "pointed_$cleanName"
-
-  val typeClassName = ClassName(cefGeneratedPackage, typeName)
-}
 
 
 val ClassDescriptor.isCefBased: Boolean

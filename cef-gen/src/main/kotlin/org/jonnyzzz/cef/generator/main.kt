@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperInterfaces
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jonnyzzz.cef.generator.c.loadCefDeclarations
+import org.jonnyzzz.cef.generator.kn.cefTypeInfo
 import java.io.File
 import java.util.*
 
@@ -119,6 +120,7 @@ private fun GeneratorParameters.resolveCefCDeclarations() {
 
 fun GeneratorParameters.resolveCefBaseRefCounted(classes: List<ClassDescriptor>) {
   cefBaseClassDescriptor = classes.first { it.toClassName() == cefBaseRefCounted }
+  cefBaseClassDescriptorInfo = cefTypeInfo(cefBaseClassDescriptor)
 }
 
 private fun GeneratorParameters.collectAllEnums(classes: List<ClassDescriptor>) {
