@@ -3,6 +3,7 @@ package org.jonnyzzz.cef.generator
 import org.jonnyzzz.cef.generator.c.Line
 import org.jonnyzzz.cef.generator.c.filterMacros
 import org.jonnyzzz.cef.generator.c.lookupGlobalFunctions
+import org.jonnyzzz.cef.generator.c.lookupStructs
 import org.jonnyzzz.cef.generator.c.parseBlocks
 import java.io.File
 
@@ -43,6 +44,20 @@ private fun processCIncludeFile(includeFile: File) {
     println()
     println("//${globalFunction.docComment}")
     println(globalFunction.returnType +" " + globalFunction.functionName + " " + globalFunction.arguments)
+    println()
+  }
+  println("=================")
+  println()
+  println()
+
+  val structs = lookupStructs(blocks)
+  for (struct in structs) {
+    println()
+    println(struct)
+    println()
+    println("//${struct.docComment}")
+    println(struct.structTypeName)
+    println(struct.typedefTypeName)
     println()
   }
 }
