@@ -39,7 +39,6 @@ fun GeneratorParameters.generateType(clazz: ClassDescriptor,
           .addAnnotation(AnnotationSpec.builder(Suppress::class).addMember("%S", "unused").build())
 
   val type = TypeSpec.interfaceBuilder(typeName)
-          .addAnnotation(ClassName("kotlin", "ExperimentalUnsignedTypes"))
 
   /*
   .primaryConstructor(FunSpec.constructorBuilder()
