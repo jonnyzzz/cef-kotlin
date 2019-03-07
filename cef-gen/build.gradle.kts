@@ -29,6 +29,8 @@ dependencies {
   implementation("org.jetbrains.kotlin:kotlin-compiler:$kotlinVersion")
   implementation("org.jetbrains.kotlin:kotlin-native-utils:$kotlinVersion")
   implementation("com.squareup:kotlinpoet:1.1.0")
+  
+  implementation(project(":c-reader"))
 }
 
 configure<ApplicationPluginConvention> {
@@ -43,7 +45,7 @@ tasks.getByName<JavaExec>("run") {
   doFirst {
     delete(targetDir)
   }
-  1
+
   args = listOf(
           //TODO: ugly paths!
           klibFile.path,

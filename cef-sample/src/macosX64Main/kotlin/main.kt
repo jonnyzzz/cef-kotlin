@@ -8,12 +8,7 @@ import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import org.jonnyzzz.cef.generated.KCefAppImplBase
 import org.jonnyzzz.cef.generated.KCefSettingsImplBase
-import org.jonnyzzz.cef.interop._cef_command_line_t
-import org.jonnyzzz.cef.interop._cef_scheme_registrar_t
-import org.jonnyzzz.cef.interop.cef_execute_process
-import org.jonnyzzz.cef.interop.cef_initialize
-import org.jonnyzzz.cef.interop.cef_main_args_t
-import org.jonnyzzz.cef.interop.cef_shutdown
+import org.jonnyzzz.cef.interop.*
 import kotlin.system.exitProcess
 
 
@@ -28,7 +23,7 @@ fun main(args: Array<String>): Unit = memScoped {
   val app = object : KCefAppImplBase(this) {
     override fun getBrowserProcessHandler() = null
     override fun getRenderProcessHandler() = null
-    override fun getResourceBundleHandler() = null
+    override fun getResourceBundleHandler() : CPointer<_cef_resource_bundle_handler_t>? { return null }
     override fun onBeforeCommandLineProcessing(p0: String?, p1: CPointer<_cef_command_line_t>?) = Unit
     override fun onRegisterCustomSchemes(p0: CPointer<_cef_scheme_registrar_t>?) = Unit
   }
