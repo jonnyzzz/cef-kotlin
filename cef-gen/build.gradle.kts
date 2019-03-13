@@ -34,12 +34,12 @@ dependencies {
   testImplementation("junit:junit:4.12")
 }
 
-configure<ApplicationPluginConvention> {
+application {
   mainClassName = "org.jonnyzzz.cef.generator.MainKt"
 }
 
 setupCefConfigurations {
-  tasks.getByName<JavaExec>("run") {
+  (tasks.run) {
     dependsOn(cef_include)
 
     val targetDir = project(":cef-mpp").buildDir / "generated-cef"
