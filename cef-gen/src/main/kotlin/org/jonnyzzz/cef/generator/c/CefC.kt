@@ -29,13 +29,13 @@ class CefDeclarations(
         private val files: List<CFileInfo>
 ) {
 
-  val functions: Map<String, CefFunction> = run {
+  private val functions: Map<String, CefFunction> = run {
     files.flatMap { file ->
       file.globalFunctions.map { it.name to CefFunction(file, it) }
     }.groupBy { it.first }.mapValues { it.value.single().second }
   }.toSortedMap()
 
-  val structs: Map<String, CefStruct> = run {
+  private val structs: Map<String, CefStruct> = run {
     files.flatMap { file ->
       file.structs.flatMap {
         val s = CefStruct(file, it)
@@ -46,7 +46,7 @@ class CefDeclarations(
 
 
   fun findStruct(clazz: ClassDescriptor) = structs[clazz.name.asString()]
-
+  fun findFunction(p: PropertyDescriptor) = functions[p.name.asString()]
 
   override fun toString(): String {
     return "CefDeclarations(files=${files.size}, functions=${functions.size}, types=${structs.size / 2})"

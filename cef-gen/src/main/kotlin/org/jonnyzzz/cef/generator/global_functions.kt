@@ -1,11 +1,12 @@
 package org.jonnyzzz.cef.generator
 
 import com.squareup.kotlinpoet.AnnotationSpec
-import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
+import com.squareup.kotlinpoet.FunSpec
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
-import org.jonnyzzz.cef.generator.kn.detectFunctionProperty
+import org.jonnyzzz.cef.generator.kn.DetectedFunctionParam
+import org.jonnyzzz.cef.generator.kn.detectFunctionPropertyType
 
 fun GeneratorParameters.generateValFunctions(props: List<PropertyDescriptor>) {
   val poet = FileSpec.builder(
@@ -24,16 +25,30 @@ private fun GeneratorParameters.generateValFunctionsPointer(prop: PropertyDescri
     first() + drop(1).joinToString("") { it.capitalize() }
   }
 
-  val (fSpec, fParams) = detectFunctionProperty(prop, propName) ?: return
+  val funType = detectFunctionPropertyType(prop) ?: return
+
+  val cefFunction = cefDeclarations.findFunction(prop)
+
+  val fSpec = FunSpec.builder(propName)
+
+  val fReturnType = funType.last()
+  val fParams = funType.dropLast(1).mapIndexed { idx, it ->
+    DetectedFunctionParam(cefFunction?.function?.arguments?.getOrNull(idx)?.name ?: "p$idx", it)
+  }
+
+  fParams.forEach {
+    fSpec.addParameter(it.paramName, it.paramType)
+  }
+
+  fSpec.returns(fReturnType)
+
   val originalName = prop.fqNameSafe.asString()
 
   fSpec.addStatement("return ($originalName!!)(${fParams.joinToString(", ") { it.paramName }})")
-  fSpec.addAnnotation(ClassName("kotlin", "ExperimentalUnsignedTypes"))
 
-  cefDeclarations.functions[prop.name.asString()]?.function?.docComment?.let {
+  cefFunction?.function?.docComment?.let {
     fSpec.addKdoc(it)
   }
 
-  println("${prop.name}  ${prop.returnType?.javaClass}: ${prop.returnType}")
   poet.addFunction(fSpec.build())
 }
