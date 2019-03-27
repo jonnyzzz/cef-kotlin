@@ -6,6 +6,8 @@ plugins {
 
 setupCefConfigurations {
   kotlin {
+    
+    //TODO: setup TWO binaries - one for renderer processes, the other for entry-point
     macosX64 {
       compilations["main"].kotlinOptions.freeCompilerArgs = listOf("-Xverbose-phases=linker")
 
