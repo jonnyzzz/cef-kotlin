@@ -61,7 +61,7 @@ private fun GeneratorParameters.generateStructWrapper(info: CefKNTypeInfo) : Typ
 
 private fun GeneratorParameters.generateImplBase(info: CefKNTypeInfo, clazz: ClassDescriptor) : TypeSpec.Builder = info.run {
   val cValueInit = CodeBlock.builder()
-          .beginControlFlow("cValue")
+          .beginControlFlow("scope.alloc")
           .addStatement("memset(ptr, 0, %T.size.convert())", kStructTypeName)
           .apply {
             when {
@@ -118,7 +118,7 @@ private fun GeneratorParameters.generateImplBase(info: CefKNTypeInfo, clazz: Cla
           .addSuperinterface(kInterfaceTypeName)
           .primaryConstructor(
                   FunSpec.constructorBuilder()
-                          .addParameter("defer", ClassName("kotlinx.cinterop","DeferScope"))
+                          .addParameter("scope", ClassName("kotlinx.cinterop","MemScope"))
                           .build()
           ).apply {
             if (clazz.isCefBased) {
@@ -127,11 +127,10 @@ private fun GeneratorParameters.generateImplBase(info: CefKNTypeInfo, clazz: Cla
           }
 
           .addProperty(PropertySpec
-                  .builder("ptr", rawStruct.asNullableCPointer())
-                  .receiver(memberScopeType)
+                  .builder("ptr", rawStruct)
                   .getter(FunSpec
                           .getterBuilder()
-                          .addStatement("return cValue.ptr.reinterpret()")
+                          .addStatement("return cValue.reinterpret()")
                           .build()
                   ).build()
           )
@@ -140,12 +139,12 @@ private fun GeneratorParameters.generateImplBase(info: CefKNTypeInfo, clazz: Cla
           .addProperty(PropertySpec
                   .builder("stableRef", ParameterizedTypeName.run { stableRef.parameterizedBy(kImplBaseTypeName) })
                   .addModifiers(KModifier.PRIVATE)
-                  .initializer("%T.create(this).also { defer.defer {  if (!isFrozen) it.dispose() } }", stableRef)
+                  .initializer("scope.stablePtr(this)", stableRef)
                   .build()
                   )
 
           .addProperty(PropertySpec
-                  .builder("cValue", kStructTypeName.asCValue())
+                  .builder("cValue", kStructTypeName)
                   .addModifiers(KModifier.PRIVATE)
                   .initializer(cValueInit)
                   .build()
@@ -158,23 +157,19 @@ private fun GeneratorParameters.generateImplBase(info: CefKNTypeInfo, clazz: Cla
                       .builder(p.propName, p.propType, KModifier.OVERRIDE).mutable(true)
                       .getter(FunSpec
                               .getterBuilder()
-                              .beginControlFlow("cValue.useContents")
-                              .addStatement("return " + p.fromCefToKotlin("cef.${p.cFieldName}"))
-                              .endControlFlow()
+                              .addStatement("return cValue." + p.fromCefToKotlin("cef.${p.cFieldName}"))
                               .build()
                       )
                       .setter(FunSpec
                               .setterBuilder()
                               .addParameter("value", p.propType)
-                              .beginControlFlow("cValue.useContents")
                               .apply {
                                 if (p.originalTypeName?: p.propType in copyFromTypeNames) {
-                                  addStatement("cef.${p.cFieldName}.copyFrom(value)")
+                                  addStatement("cValue.cef.${p.cFieldName}.copyFrom(value)")
                                 } else {
-                                  addStatement("cef.${p.cFieldName} = value")
+                                  addStatement("cValue.cef.${p.cFieldName} = value")
                                 }
                               }
-                              .endControlFlow()
                               .build()
                       )
 
@@ -191,8 +186,9 @@ private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = ce
           cefGeneratedPackage,
           sourceFileName
   )
-          .addImport("kotlinx.cinterop", "cValue", "value", "convert", "useContents", "memberAt", "ptr", "reinterpret", "invoke", "pointed", "staticCFunction", "asStableRef")
+          .addImport("kotlinx.cinterop", "alloc", "cValue", "value", "convert", "useContents", "memberAt", "ptr", "reinterpret", "invoke", "pointed", "staticCFunction", "asStableRef")
           .addImport("org.jonnyzzz.cef", "value", "asString", "copyFrom")
+          .addImport("org.jonnyzzz.cef.internal", "stablePtr")
           .addImport("org.jonnyzzz.cef.generated", "copyFrom")
           .addImport("kotlin.native.concurrent", "isFrozen")
           .addImport("kotlin.native", "initRuntimeIfNeeded")

@@ -1,6 +1,8 @@
 package org.jonnyzzz.cef.internal
 
 import kotlinx.atomicfu.atomic
+import kotlinx.cinterop.DeferScope
+import kotlinx.cinterop.StableRef
 import org.jonnyzzz.cef.generated.KCefBaseRefCounted
 
 internal class KCefRefCountedImpl : KCefBaseRefCounted {
@@ -14,5 +16,11 @@ internal class KCefRefCountedImpl : KCefBaseRefCounted {
 
   override fun hasOneRef() =  if(refsCount.value == 1) 1 else 0
   override fun release() = if (refsCount.decrementAndGet() >= 1) 1 else 0
+}
+
+internal inline fun <reified T : Any> DeferScope.stablePtr(obj: T): StableRef<T> {
+  val ptr = StableRef.create(obj)
+  defer { ptr.dispose() }
+  return ptr
 }
 
