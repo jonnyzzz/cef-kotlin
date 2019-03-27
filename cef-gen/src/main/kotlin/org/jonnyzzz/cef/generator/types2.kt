@@ -21,7 +21,7 @@ import org.jonnyzzz.cef.generator.kn.isCefBased
 fun GeneratorParameters.generateTypes2(clazzez: List<ClassDescriptor>) {
   clazzez.forEach {
 
-    if (it.name.asString() in setOf("_cef_browser_process_handler_t", "_cef_base_ref_counted_t", "_cef_app_t", "_cef_before_download_callback_t", "_cef_settings_t")) {
+    if (it.name.asString() in setOf("_cef_browser_process_handler_t", "_cef_base_ref_counted_t", "_cef_app_t", "_cef_before_download_callback_t", "_cef_settings_t", "_cef_client_t", "_cef_window_info_t", "_cef_browser_settings_t")) {
       generateType2(it)
     }
 
@@ -66,6 +66,8 @@ private fun GeneratorParameters.generateImplBase(info: CefKNTypeInfo, clazz: Cla
           .apply {
             when {
               clazz.isCefBased -> addStatement("cef.base.size = %T.size.convert()", kStructTypeName)
+              //TODO: resolve `size` field via library scan instead
+              info.kInterfaceTypeName.simpleName == "KCefWindowInfo" -> {}
               else -> addStatement("cef.size = %T.size.convert()", kStructTypeName)
             }
           }
@@ -211,7 +213,15 @@ private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = ce
     }
 
     fSpec.returns(p.returnType)
-    fSpec.addModifiers(KModifier.ABSTRACT)
+
+    //default implementation for nullable types
+    if (p.returnType.isNullable) {
+      fSpec.addModifiers(KModifier.OPEN)
+      fSpec.addStatement("return null")
+    } else {
+      fSpec.addModifiers(KModifier.ABSTRACT)
+    }
+
     kInterface.addFunction(fSpec.build())
   }
 
