@@ -5,3 +5,7 @@ build/
 *.ipr
 
 cmake-build-debug
+
+
+_idea*/
+_clion*/
