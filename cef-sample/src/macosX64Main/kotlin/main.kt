@@ -38,7 +38,7 @@ fun main(args: Array<String>): Unit = memScoped {
 
   val app = object : KCefAppImplBase(this) {
     override fun getBrowserProcessHandler(): CPointer<_cef_browser_process_handler_t>? {
-      return browserProcessHandler.run { ptr }
+      return browserProcessHandler.ptr
     }
     override fun getRenderProcessHandler(): CPointer<_cef_render_process_handler_t>? {
       return null
@@ -55,11 +55,13 @@ fun main(args: Array<String>): Unit = memScoped {
   }
 
   val cefSettings = object: KCefSettingsImplBase(this){}.apply {
-    browserSubprocessPath = "/Users/jonnyzzz/Work/cef-kotlin/cef-sample/build/bin/macosX64/debugExecutable.apps/cef-sample.app/Contents/MacOS/cef-sample.kexe"
+    browserSubprocessPath = "2323423421234322"
   }
 
-  cef_initialize(mainArgs.ptr, cefSettings.run { ptr } , app.run { ptr } , null)
+  cef_initialize(mainArgs.ptr, cefSettings.ptr , app.ptr , null)
   println("cef_initialize - complete")
+
+  cef_run_message_loop()
 
   cef_shutdown()
   println("cef_shutdown - complete")

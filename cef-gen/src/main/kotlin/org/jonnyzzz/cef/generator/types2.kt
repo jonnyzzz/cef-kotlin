@@ -127,10 +127,10 @@ private fun GeneratorParameters.generateImplBase(info: CefKNTypeInfo, clazz: Cla
           }
 
           .addProperty(PropertySpec
-                  .builder("ptr", rawStruct)
+                  .builder("ptr", rawStruct.asCPointer())
                   .getter(FunSpec
                           .getterBuilder()
-                          .addStatement("return cValue.reinterpret()")
+                          .addStatement("return cValue.reinterpret<%T>().ptr", rawStruct)
                           .build()
                   ).build()
           )
