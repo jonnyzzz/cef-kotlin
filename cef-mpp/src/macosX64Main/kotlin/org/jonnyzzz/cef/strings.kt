@@ -5,21 +5,37 @@ import kotlinx.cinterop.alloc
 import kotlinx.cinterop.convert
 import kotlinx.cinterop.cstr
 import kotlinx.cinterop.get
+import kotlinx.cinterop.invoke
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
+import kotlinx.cinterop.readBytes
+import kotlinx.cinterop.sizeOf
+import kotlinx.cinterop.toKString
 import org.jonnyzzz.cef.generated.cefStringFromUtf8
+import org.jonnyzzz.cef.generated.cefStringSet
 import org.jonnyzzz.cef.generated.cefStringToUtf8
+import org.jonnyzzz.cef.interop.cef_string_set
 import org.jonnyzzz.cef.interop.cef_string_t
+import org.jonnyzzz.cef.interop.cef_string_utf16_to_utf8
 import org.jonnyzzz.cef.interop.cef_string_utf8_clear
 import org.jonnyzzz.cef.interop.cef_string_utf8_t
+import org.jonnyzzz.cef.interop.cef_string_utf8_to_utf16
+import org.jonnyzzz.cef.interop.char16Var
 import platform.posix.memset
+import kotlin.math.min
 
 fun cef_string_t.copyFrom(str: String) {
-  val that = this
-  memScoped {
-    cefStringFromUtf8(str.cstr.ptr, length.convert(), that.ptr)
-  }
+  //see https://github.com/cztomczak/cefcapi/blob/master/examples/main_win.c
+  cef_string_utf8_to_utf16(str, str.length.convert(), this.ptr)
+}
+
+fun cef_string_t.toDebugString() = buildString {
+  append("cef_string_t{")
+  append("length=").append(length)
+  append(", raw=")
+  append(str?.run { readBytes(min(20, length * sizeOf<char16Var>().toInt())).joinToString("") { it.toChar().toString() } })
+  append("}")
 }
 
 fun cef_string_t.asString() : String {
@@ -32,7 +48,7 @@ fun cef_string_t.asString() : String {
 
     cefStringToUtf8(that.str, that.length, buf.ptr)
 
-    ByteArray(buf.length.toInt()) { buf.str!!.get(it) }.stringFromUtf8()
+    buf.str!!.readBytes(buf.length.toInt()).stringFromUtf8OrThrow()
   }
 }
 
