@@ -3,18 +3,40 @@ package org.jonnyzzz.cef.example
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.allocArrayOf
+import kotlinx.cinterop.cValue
+import kotlinx.cinterop.convert
 import kotlinx.cinterop.cstr
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
+import kotlinx.cinterop.useContents
+import org.jonnyzzz.cef.asString
+import org.jonnyzzz.cef.copyFrom
 import org.jonnyzzz.cef.generated.KCefAppImplBase
 import org.jonnyzzz.cef.generated.KCefBrowserProcessHandlerImplBase
 import org.jonnyzzz.cef.generated.KCefSettingsImplBase
+import org.jonnyzzz.cef.generated.cefStringClear
 import org.jonnyzzz.cef.interop.*
+import platform.posix.memset
 import kotlin.system.exitProcess
+import kotlin.test.Test
 
 
 fun main(args: Array<String>): Unit = memScoped {
   println("CEF Kotlin sample project...")
+
+
+  val str = alloc<cef_string_t> {
+    cefStringClear(ptr)
+  }
+
+  str.copyFrom("123")
+
+  val actual = str.asString()
+
+  println("actual: $actual")
+
+
+  return
 
   val mainArgs = alloc<cef_main_args_t> {
     this.argc = args.size

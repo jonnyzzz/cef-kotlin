@@ -108,6 +108,7 @@ private fun setupBundle(cef: ClientCefConfigurationsImpl, executable: Executable
       }
 
       project.tasks.create<Exec>("run$taskNameSuffix") {
+        group = "run"
         dependsOn(buildBundleTask)
         commandLine(bundleDir / "Contents" / "MacOS" / outputFile.name)
       }
