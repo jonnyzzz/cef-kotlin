@@ -1,4 +1,5 @@
 rootProject.name = "cef-kotlin_clion"
 
-includeBuild("..")
+apply(from = "../settings-setup-plugins.gradle.kts")
 
+includeBuild("..")

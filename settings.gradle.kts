@@ -1,17 +1,6 @@
-
-pluginManagement {
-  resolutionStrategy {
-    eachPlugin {
-      if (requested.id.id.startsWith("org.jonnyzzz.cef")) {
-        useModule("org.jonnyzzz.cef.plugins:kotlin-cef:LOCAL_BUILD")
-      }
-    }
-  }
-}
+apply(from = "settings-setup-plugins.gradle.kts")
 
 rootProject.name = "cef-kotlin"
-
-
 
 include("deps-cef")
 include("cef-mpp")
@@ -21,9 +10,3 @@ include("cef-sample")
 
 enableFeaturePreview("GRADLE_METADATA")
 
-
-includeBuild("gradle-plugins") {
-  dependencySubstitution {
-    substitute(module("org.jonnyzzz.cef.plugins:kotlin-cef")).with(project(":kotlin-cef"))
-  }
-}
