@@ -1,6 +1,7 @@
 package org.jonnyzzz.cef.generator
 
 import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.TypeName
@@ -22,13 +23,23 @@ val cefString16 = ClassName(cefInteropPackage, "_cef_string_utf16_t")
 val cefBaseRefCounted = ClassName(cefInteropPackage, "_cef_base_ref_counted_t")
 val cefBaseRefCountedKImpl = ClassName("org.jonnyzzz.cef.internal", "KCefRefCountedImpl")
 
-val kotlinString = ClassName.bestGuess("String")
+val kotlinString = ClassName("kotlin", "String")
 
 val memberScopeType = ClassName("kotlinx.cinterop", "MemScope")
 val stableRef = ClassName("kotlinx.cinterop", "StableRef")
 val cValueType = ClassName("kotlinx.cinterop", "CValue")
 val cPointerType = ClassName("kotlinx.cinterop", "CPointer")
 val cOpaquePointerVar = ClassName("kotlinx.cinterop", "COpaquePointerVar")
+
+val fnValue = MemberName("kotlinx.cinterop", "value")
+val fnPointed = MemberName("kotlinx.cinterop", "pointed")
+val fnConvert = MemberName("kotlinx.cinterop", "convert")
+val fnStaticCFunction = MemberName("kotlinx.cinterop", "staticCFunction")
+val fnMemberAt = MemberName("kotlinx.cinterop", "memberAt")
+
+val fnPosixMemset = MemberName("platform.posix", "memset")
+val fnReinterpret = MemberName("kotlinx.cinterop", "reinterpret")
+val fnAsStableRef = MemberName("kotlinx.cinterop", "asStableRef")
 
 fun ClassifierDescriptor.toClassName(): ClassName = when(val firstParent = parents.first()) {
   is ClassDescriptor -> firstParent.toClassName().nestedClass(name.asString())

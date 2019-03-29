@@ -6,6 +6,7 @@ import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
@@ -45,12 +46,10 @@ private fun GeneratorParameters.generateStructWrapper(info: CefKNTypeInfo) : Typ
           .addProperty(
                   PropertySpec
                           .builder("cef", rawStruct)
-                          .getter(FunSpec.getterBuilder().addStatement("return memberAt(0)").build())
+                          .getter(FunSpec.getterBuilder().addStatement("return %M(0)", fnMemberAt).build())
                           .build()
           )
 
-          // val stablePtr : COpaquePointerVar
-          //        get() = memberAt(_cef_before_download_callback_t.size)
           .addProperty(
                   PropertySpec
                           .builder("stablePtr", cOpaquePointerVar)
@@ -61,38 +60,32 @@ private fun GeneratorParameters.generateStructWrapper(info: CefKNTypeInfo) : Typ
 
 private fun GeneratorParameters.generateImplBase(info: CefKNTypeInfo, clazz: ClassDescriptor) : TypeSpec.Builder = info.run {
   val cValueInit = CodeBlock.builder()
-          .beginControlFlow("scope.alloc")
-          .addStatement("memset(ptr, 0, %T.size.convert())", kStructTypeName)
+          .beginControlFlow("scope.%M", MemberName("kotlinx.cinterop", "alloc"))
+          .addStatement("%M(ptr, 0, %T.size.%M())", fnPosixMemset, kStructTypeName, fnConvert)
           .apply {
             when {
-              clazz.isCefBased -> addStatement("cef.base.size = %T.size.convert()", kStructTypeName)
+              clazz.isCefBased -> addStatement("cef.base.size = %T.size.%M()", kStructTypeName, fnConvert)
               //TODO: resolve `size` field via library scan instead
               info.kInterfaceTypeName.simpleName == "KCefWindowInfo" -> {}
-              else -> addStatement("cef.size = %T.size.convert()", kStructTypeName)
+              else -> addStatement("cef.size = %T.size.%M()", kStructTypeName, fnConvert)
             }
           }
-          .addStatement("stablePtr.value = stableRef.asCPointer()")
+          .addStatement("stablePtr.%M = stableRef.asCPointer()", fnValue)
           .also { code ->
             for (p in info.functionProperties) {
-              code.beginControlFlow("cef.${p.cFieldName} = staticCFunction")
+              code.beginControlFlow("cef.${p.cFieldName} = %M", fnStaticCFunction)
               code.addStatement(
                       (listOf(p.THIS) + p.parameters).joinToString(", ") { it.paramName } + " ->"
               )
 
               code.addStatement("initRuntimeIfNeeded()")
 
-              //   val pThis = THIS!!.reinterpret<KCefBeforeDownloadCallbackStruct>()
-              //                    .pointed
-              //                    .stablePtr
-              //                    .value!!
-              //                    .asStableRef<KCefBeforeDownloadCallbackBase>().get()
-
-              code.addStatement("val pThis = ${p.THIS.paramName}!!.reinterpret<%T>()", kStructTypeName)
+              code.addStatement("val pThis = ${p.THIS.paramName}!!.%M<%T>()", fnReinterpret, kStructTypeName)
               code.indent().indent()
-              code.addStatement(".pointed")
+              code.addStatement(".%M", fnPointed)
               code.addStatement(".stablePtr")
               code.addStatement(".value!!")
-              code.addStatement(".asStableRef<%T>()", kImplBaseTypeName)
+              code.addStatement(".%M<%T>()", fnAsStableRef, kImplBaseTypeName)
               code.addStatement(".get()")
               code.unindent().unindent()
               code.addStatement("")
@@ -120,7 +113,7 @@ private fun GeneratorParameters.generateImplBase(info: CefKNTypeInfo, clazz: Cla
           .addSuperinterface(kInterfaceTypeName)
           .primaryConstructor(
                   FunSpec.constructorBuilder()
-                          .addParameter("scope", ClassName("kotlinx.cinterop","MemScope"))
+                          .addParameter("scope", ClassName("kotlinx.cinterop", "MemScope"))
                           .build()
           ).apply {
             if (clazz.isCefBased) {
@@ -132,16 +125,15 @@ private fun GeneratorParameters.generateImplBase(info: CefKNTypeInfo, clazz: Cla
                   .builder("ptr", rawStruct.asCPointer())
                   .getter(FunSpec
                           .getterBuilder()
-                          .addStatement("return cValue.reinterpret<%T>().ptr", rawStruct)
+                          .addStatement("return cValue.%M<%T>().%M", fnReinterpret, rawStruct, MemberName("kotlinx.cinterop", "ptr"))
                           .build()
                   ).build()
           )
 
-          //private val stableRef = StableRef.create(this).also { defer.defer { it.dispose() } }
           .addProperty(PropertySpec
                   .builder("stableRef", ParameterizedTypeName.run { stableRef.parameterizedBy(kImplBaseTypeName) })
                   .addModifiers(KModifier.PRIVATE)
-                  .initializer("scope.stablePtr(this)", stableRef)
+                  .initializer("scope.%M(this)", MemberName("org.jonnyzzz.cef.internal", "stablePtr"))
                   .build()
                   )
 
@@ -183,20 +175,7 @@ private fun GeneratorParameters.generateImplBase(info: CefKNTypeInfo, clazz: Cla
 
 }
 
-private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = cefTypeInfo(clazz).run {
-  val poet = FileSpec.builder(
-          cefGeneratedPackage,
-          sourceFileName
-  )
-          .addImport("kotlinx.cinterop", "alloc", "cValue", "value", "convert", "useContents", "memberAt", "ptr", "reinterpret", "invoke", "pointed", "staticCFunction", "asStableRef")
-          .addImport("org.jonnyzzz.cef", "value", "asString", "copyFrom")
-          .addImport("org.jonnyzzz.cef.internal", "stablePtr")
-          .addImport("org.jonnyzzz.cef.generated", "copyFrom")
-          .addImport("kotlin.native.concurrent", "isFrozen")
-          .addImport("kotlin.native", "initRuntimeIfNeeded")
-          .addImport("platform.posix", "memset")
-          .addAnnotation(AnnotationSpec.builder(Suppress::class).addMember("%S", "unused").build())
-
+private fun CefKNTypeInfo.generateKInterface(): TypeSpec.Builder {
   val kInterface = TypeSpec.interfaceBuilder(kInterfaceTypeName).addKdoc(this)
 
   //do we really need that base interface explicitly?
@@ -216,7 +195,6 @@ private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = ce
 
     //default implementation for nullable types
     if (p.returnType.isNullable) {
-      fSpec.addModifiers(KModifier.OPEN)
       fSpec.addStatement("return null")
     } else {
       fSpec.addModifiers(KModifier.ABSTRACT)
@@ -229,11 +207,36 @@ private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = ce
     val pSpec = PropertySpec.builder(p.propName, p.propType).mutable(true).addKdoc(p)
     kInterface.addProperty(pSpec.build())
   }
+  return kInterface
+}
 
-  poet.addType(kInterface.build())
 
-  poet.addType(generateStructWrapper(this).build())
-  poet.addType(generateImplBase(this, clazz).build())
+private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = cefTypeInfo(clazz).run {
+  val interfaceFile = FileSpec.builder(
+          cefGeneratedPackage,
+          sourceInterfaceFileName
+  )
 
-  poet.build().writeTo()
+  interfaceFile.addType(generateKInterface().build())
+  interfaceFile.build().writeTo()
+
+
+  val kotlinToCefFile = FileSpec.builder(
+          cefGeneratedPackage,
+          sourceKtoCefFileName
+  )
+//  )
+//          .addImport("kotlinx.cinterop", "alloc", "cValue", "value", "convert", "useContents", "memberAt", "ptr", "reinterpret", "invoke", "pointed", "staticCFunction", "asStableRef")
+          .addImport("org.jonnyzzz.cef", "value", "asString", "copyFrom")
+//          .addImport("org.jonnyzzz.cef.internal", "stablePtr")
+//          .addImport("org.jonnyzzz.cef.generated", "copyFrom")
+//          .addImport("kotlin.native.concurrent", "isFrozen")
+//          .addImport("kotlin.native", "initRuntimeIfNeeded")
+//          .addImport("platform.posix", "memset")
+//          .addAnnotation(AnnotationSpec.builder(Suppress::class).addMember("%S", "unused").build())
+
+
+  kotlinToCefFile.addType(generateStructWrapper(this).build())
+  kotlinToCefFile.addType(generateImplBase(this, clazz).build())
+  kotlinToCefFile.build().writeTo()
 }

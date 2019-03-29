@@ -20,7 +20,8 @@ data class CefKNTypeInfo(
   val cleanName = rawStruct.simpleName.removePrefix("_").removePrefix("cef").removeSuffix("_t")
   val typeName = "Cef" + cleanName.split("_").joinToString("") { it.capitalize() }
 
-  val sourceFileName = "K$typeName"
+  val sourceInterfaceFileName = "K$typeName"
+  val sourceKtoCefFileName = "K${typeName}Bridge"
 
   val kInterfaceTypeName = ClassName(cefGeneratedPackage, "K$typeName")
   val kStructTypeName = ClassName(cefGeneratedPackage, "K${typeName}Struct")
