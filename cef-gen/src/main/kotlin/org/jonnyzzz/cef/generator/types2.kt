@@ -1,22 +1,8 @@
 package org.jonnyzzz.cef.generator
 
-import com.squareup.kotlinpoet.AnnotationSpec
-import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
-import com.squareup.kotlinpoet.FunSpec
-import com.squareup.kotlinpoet.KModifier
-import com.squareup.kotlinpoet.MemberName
-import com.squareup.kotlinpoet.ParameterizedTypeName
-import com.squareup.kotlinpoet.PropertySpec
-import com.squareup.kotlinpoet.TypeSpec
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jonnyzzz.cef.generator.kn.CefKNTypeInfo
-import org.jonnyzzz.cef.generator.kn.addKdoc
 import org.jonnyzzz.cef.generator.kn.cefTypeInfo
-import org.jonnyzzz.cef.generator.kn.allMeaningfulProperties
-import org.jonnyzzz.cef.generator.kn.fromCefToKotlin
-import org.jonnyzzz.cef.generator.kn.isCefBased
 
 
 fun GeneratorParameters.generateTypes2(clazzez: List<ClassDescriptor>) {
@@ -50,6 +36,6 @@ private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = ce
           .addImport("org.jonnyzzz.cef", "value", "asString", "copyFrom")
 
   kotlinToCefFile.addType(generateStructWrapper().build())
-  kotlinToCefFile.addType(generateImplBase(this, clazz).build())
+  kotlinToCefFile.addType(generateImplBase(this).build())
   kotlinToCefFile.build().writeTo("k2cef")
 }

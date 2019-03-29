@@ -14,6 +14,7 @@ data class FieldPropertyDescriptor(
         val propName: String,
         val propType: TypeName,
         val cefMember: StructField?,
+        val isVar: Boolean,
         //the C declared type name, before type mapping
         override val originalTypeName: TypeName? = null,
         val visibleInInterface : Boolean = true

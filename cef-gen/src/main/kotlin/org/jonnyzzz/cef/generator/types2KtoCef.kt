@@ -6,14 +6,10 @@ import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterizedTypeName
-import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jonnyzzz.cef.generator.kn.CefKNTypeInfo
-import org.jonnyzzz.cef.generator.kn.allMeaningfulProperties
 import org.jonnyzzz.cef.generator.kn.fromCefToKotlin
-import org.jonnyzzz.cef.generator.kn.isCefBased
 
 fun CefKNTypeInfo.generateStructWrapper() : TypeSpec.Builder {
   return TypeSpec.classBuilder(kStructTypeName)
@@ -42,7 +38,7 @@ fun CefKNTypeInfo.generateStructWrapper() : TypeSpec.Builder {
 }
 
 
-fun GeneratorParameters.generateImplBase(info: CefKNTypeInfo, clazz: ClassDescriptor) : TypeSpec.Builder = info.run {
+fun GeneratorParameters.generateImplBase(info: CefKNTypeInfo) : TypeSpec.Builder = info.run {
   val cValueInit = CodeBlock.builder()
           .beginControlFlow("scope.%M", MemberName("kotlinx.cinterop", "alloc"))
           .addStatement("%M(ptr, 0, %T.size.%M())", fnPosixMemset, kStructTypeName, fnConvert)
@@ -81,11 +77,11 @@ fun GeneratorParameters.generateImplBase(info: CefKNTypeInfo, clazz: ClassDescri
             }
           }
           .also { code ->
-            clazz.allMeaningfulProperties()
-                    .filter { !it.isVar}
-                    .filter { it.type.toTypeName() == ClassName("org.jonnyzzz.cef.interop", "_cef_string_utf16_t")}
+            info.fieldProperties
+                    .filter { !it.isVar }
+                    .filter { it.type == ClassName("org.jonnyzzz.cef.interop", "_cef_string_utf16_t")}
                     .forEach { p ->
-                      code.addStatement("cefStringClear(cef.${p.name}.ptr)")
+                      code.addStatement("cefStringClear(cef.${p.propName}.ptr)")
                     }
           }
           .endControlFlow()
@@ -100,8 +96,8 @@ fun GeneratorParameters.generateImplBase(info: CefKNTypeInfo, clazz: ClassDescri
                           .addParameter("scope", ClassName("kotlinx.cinterop", "MemScope"))
                           .build()
           ).apply {
-            if (info.isCefBased) {
-              addSuperinterface(cefBaseClassDescriptorInfo.kInterfaceTypeName, CodeBlock.of("%T()", cefBaseRefCountedKImpl))
+            info.cefBased?.let { baseInfo ->
+              addSuperinterface(baseInfo.kInterfaceTypeName, CodeBlock.of("%T()", cefBaseRefCountedKImpl))
             }
           }
 
@@ -142,6 +138,7 @@ fun GeneratorParameters.generateImplBase(info: CefKNTypeInfo, clazz: ClassDescri
                               .setterBuilder()
                               .addParameter("value", p.propType)
                               .apply {
+                                //TODO: hide inside FieldPropertyDescriptor!
                                 if (p.originalTypeName?: p.propType in copyFromTypeNames) {
                                   addStatement("cValue.cef.${p.cFieldName}.copyFrom(value)")
                                 } else {

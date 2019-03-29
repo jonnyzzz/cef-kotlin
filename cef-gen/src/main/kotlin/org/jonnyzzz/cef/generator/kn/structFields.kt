@@ -1,11 +1,18 @@
 package org.jonnyzzz.cef.generator.kn
 
+import com.squareup.kotlinpoet.ClassName
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jonnyzzz.cef.generator.asNullableCPointer
+import org.jonnyzzz.cef.generator.c.CefStruct
+import org.jonnyzzz.cef.generator.toClassName
 import org.jonnyzzz.cef.generator.toTypeName
 
 
-fun CefKNTypeInfo.detectProperties() = sequence<FieldDescriptor>{
-  knDescriptor.allMeaningfulProperties().forEach { p ->
+fun detectProperties(clazz: ClassDescriptor,
+                     cefCStruct: CefStruct?,
+                     rawStruct: ClassName) = sequence<FieldDescriptor> {
+
+  clazz.allMeaningfulProperties().forEach { p ->
     val name = p.name.asString()
     val propName = name.split("_").run {
       first() + drop(1).joinToString("") { it.capitalize() }
@@ -32,7 +39,7 @@ fun CefKNTypeInfo.detectProperties() = sequence<FieldDescriptor>{
       yield(FunctionalPropertyDescriptor(name, propName, THIS, fParams, fReturnType, cefFunction))
     } else {
       val cefMember = cefCStruct?.findField(p)
-      yield(FieldPropertyDescriptor(name, propName, p.type.toTypeName(), cefMember).replaceToKotlinTypes())
+      yield(FieldPropertyDescriptor(name, propName, p.type.toTypeName(), cefMember, p.isVar).replaceToKotlinTypes())
     }
   }
 }.toList()

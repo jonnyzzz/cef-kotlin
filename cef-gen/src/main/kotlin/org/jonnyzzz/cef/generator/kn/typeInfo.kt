@@ -8,16 +8,6 @@ import org.jonnyzzz.cef.generator.shouldBePrinted
 import org.jonnyzzz.cef.generator.toTypeName
 
 
-val ClassDescriptor.isCefBased: Boolean
-  get() {
-    return getMemberScope(TypeSubstitution.EMPTY).getContributedDescriptors()
-            .filter { it.shouldBePrinted }
-            .filterIsInstance<PropertyDescriptor>()
-            .firstOrNull { it.name.asString() == "base" }?.let {
-              it.returnType?.toTypeName() == cefBaseRefCounted
-            } ?: false
-  }
-
 fun ClassDescriptor.allMeaningfulProperties() =
         getMemberScope(TypeSubstitution.EMPTY).getContributedDescriptors()
                 .filter { it.shouldBePrinted }
