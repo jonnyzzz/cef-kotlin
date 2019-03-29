@@ -12,7 +12,11 @@ data class GeneratorParameters(
         val cefIncludesDir: File,
         val outputDir: File
 ) {
-  fun FileSpec.writeTo() = writeTo(outputDir)
+  fun FileSpec.writeTo(suffix: String = "") {
+    val target = if(suffix.isEmpty()) outputDir else outputDir / suffix
+    target.mkdirs()
+    writeTo(target)
+  }
 
   lateinit var cefDeclarations: CefDeclarations
 
