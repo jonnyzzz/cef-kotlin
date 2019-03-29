@@ -1,10 +1,12 @@
 package org.jonnyzzz.cef.generator
 
 import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.INT
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.TypeName
+import com.squareup.kotlinpoet.UNIT
 import com.squareup.kotlinpoet.WildcardTypeName
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
@@ -54,6 +56,10 @@ fun ClassName.asCValue() = cValueType.parameterizedBy(this)
 
 fun ClassName.asNullableCPointer() = asCPointer().copy(nullable = true)
 fun ClassName.asNullableCValue() = asCValue().copy(nullable = true)
+
+fun TypeName.isUnit() = this == UNIT
+fun TypeName.isInt() = this == INT
+fun TypeName.isUInt() = this == ClassName("kotlin", "UInt")
 
 fun KotlinType.toTypeName(): TypeName {
   val rawType = constructor.declarationDescriptor!!.toClassName().copy(isNullable())

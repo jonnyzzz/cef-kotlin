@@ -16,8 +16,7 @@ data class FieldPropertyDescriptor(
         val cefMember: StructField?,
         val isVar: Boolean,
         //the C declared type name, before type mapping
-        override val originalTypeName: TypeName? = null,
-        val visibleInInterface : Boolean = true
+        override val originalTypeName: TypeName? = null
 ) : FieldDescriptor(), TypeReplaceableHost<FieldPropertyDescriptor> {
   override val type: TypeName
     get() = propType
@@ -34,8 +33,7 @@ data class FunctionalPropertyDescriptor(
         val THIS: DetectedFunctionParam,
         val parameters: List<DetectedFunctionParam>,
         val returnType: TypeName,
-        val cefFunctionPointer: StructFunctionPointer?,
-        val visibleInInterface : Boolean = true
+        val cefFunctionPointer: StructFunctionPointer?
 ) : FieldDescriptor() {
 
   override val docComment: String?

@@ -5,7 +5,7 @@ import kotlinx.cinterop.DeferScope
 import kotlinx.cinterop.StableRef
 import org.jonnyzzz.cef.generated.KCefBaseRefCounted
 
-internal class KCefRefCountedImpl : KCefBaseRefCounted {
+internal class KCefRefCountedImpl : KCefBaseRefCounted() {
   private val refsCount = atomic(1)
 
   override fun addRef() {

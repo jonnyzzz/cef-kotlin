@@ -2,21 +2,49 @@ package org.jonnyzzz.cef.generator
 
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import org.jonnyzzz.cef.generator.kn.CefKNTypeInfo
 import org.jonnyzzz.cef.generator.kn.addKdoc
 
 fun CefKNTypeInfo.generateKInterface(): TypeSpec.Builder {
-  val kInterface = TypeSpec.interfaceBuilder(kInterfaceTypeName).addKdoc(this)
+  val kInterface = TypeSpec.classBuilder(kInterfaceTypeName).addKdoc(this)
 
-  //do we really need that base interface explicitly?
-  /*
-  if (clazz.isCefBased) {
-    type.addSuperinterface(cefTypeInfo(cefBaseRefCounted).kInterfaceTypeName)
-  }*/
+  if (functionProperties.isNotEmpty()) {
+    kInterface.addModifiers(KModifier.ABSTRACT)
+  }
 
-  functionProperties.filter { it.visibleInInterface }.forEach { p ->
+  if (fieldProperties.isNotEmpty()) {
+    val constr = FunSpec.constructorBuilder()
+    fieldProperties.forEach { p ->
+      val parameterSpec = ParameterSpec.builder(p.propName, p.propType)
+
+      //default implementation for nullable types
+      when {
+        p.propType.isNullable -> {
+          parameterSpec.defaultValue("null")
+        }
+        p.propType.isInt() -> {
+          parameterSpec.defaultValue("0")
+        }
+        p.propType.isUInt() -> {
+          parameterSpec.defaultValue("0U")
+        }
+      }
+
+      constr.addParameter(parameterSpec.build())
+    }
+
+    kInterface.primaryConstructor(constr.build())
+
+    fieldProperties.forEach { p ->
+      val pSpec = PropertySpec.builder(p.propName, p.propType).mutable(true).addKdoc(p).initializer(p.propName)
+      kInterface.addProperty(pSpec.build())
+    }
+  }
+
+  functionProperties.forEach { p ->
     val fSpec = FunSpec.builder(p.funName).addKdoc(p)
 
     p.parameters.forEach {
@@ -26,19 +54,28 @@ fun CefKNTypeInfo.generateKInterface(): TypeSpec.Builder {
     fSpec.returns(p.returnType)
 
     //default implementation for nullable types
-    if (p.returnType.isNullable) {
-      fSpec.addStatement("return null")
-    } else {
-      fSpec.addModifiers(KModifier.ABSTRACT)
+    when {
+      p.returnType.isNullable -> {
+        fSpec.addModifiers(KModifier.OPEN)
+        fSpec.addStatement("return null")
+      }
+      p.returnType.isUnit() -> {
+        fSpec.addModifiers(KModifier.OPEN)
+      }
+      p.returnType.isInt() -> {
+        fSpec.addModifiers(KModifier.OPEN)
+        fSpec.addStatement("return 0")
+      }
+      p.returnType.isUInt() -> {
+        fSpec.addModifiers(KModifier.OPEN)
+        fSpec.addStatement("return 0U")
+      }
+      else -> fSpec.addModifiers(KModifier.ABSTRACT)
     }
 
     kInterface.addFunction(fSpec.build())
   }
 
-  fieldProperties.filter { it.visibleInInterface }.forEach { p ->
-    val pSpec = PropertySpec.builder(p.propName, p.propType).mutable(true).addKdoc(p)
-    kInterface.addProperty(pSpec.build())
-  }
   return kInterface
 }
 
