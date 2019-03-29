@@ -33,7 +33,7 @@ fun GeneratorParameters.generateCopyFunctions(clazzez: List<ClassDescriptor>) {
     }
   }.toSet()
 
-  poet.build().writeTo(outputDir)
+  poet.build().writeTo("misc")
 }
 
 private fun generateCopyFunction(clazz: ClassDescriptor, poet: FileSpec.Builder): KotlinType? {

@@ -17,7 +17,7 @@ fun GeneratorParameters.generateValFunctions(props: List<PropertyDescriptor>) {
 
   //TODO: include all global functions to provide comments and use typed API
   props.forEach { generateValFunctionsPointer(it, poet) }
-  poet.build().writeTo(outputDir)
+  poet.build().writeTo("misc")
 }
 
 private fun GeneratorParameters.generateValFunctionsPointer(prop: PropertyDescriptor, poet: FileSpec.Builder) {
