@@ -37,11 +37,6 @@ private fun GeneratorParameters.generateCValueInitBlockCefNoBase(info: CefKNType
     beginControlFlow("%M<%T>", fnCValue, rawStruct)
     addStatement("%M(%M, 0, %T.size.%M())", fnPosixMemset, fnPtr, rawStruct, fnConvert)
 
-    when {
-      info.kInterfaceTypeName.simpleName == "KCefWindowInfo" -> { }
-      else -> addStatement("size = %T.size.%M()", rawStruct, fnConvert)
-    }
-
     require(info.functionProperties.isEmpty()) { "type $rawStruct must not have functions!"}
 
     for (p in info.fieldProperties) {

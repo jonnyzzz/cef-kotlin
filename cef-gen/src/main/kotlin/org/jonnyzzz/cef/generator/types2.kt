@@ -2,19 +2,28 @@ package org.jonnyzzz.cef.generator
 
 import com.squareup.kotlinpoet.FileSpec
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jonnyzzz.cef.generator.kn.cefTypeInfo
 
 
 fun GeneratorParameters.generateTypes2(clazzez: List<ClassDescriptor>) {
   clazzez.forEach {
-
-    if (it.name.asString() in setOf("_cef_browser_process_handler_t", "_cef_base_ref_counted_t", "_cef_app_t", "_cef_before_download_callback_t", "_cef_settings_t", "_cef_client_t", "_cef_window_info_t", "_cef_browser_settings_t")) {
-      generateType2(it)
+    if (it.kind == ClassKind.ENUM_CLASS) {
+      println("Enum ${it.name}")
+      return@forEach
     }
 
-//    if (it.name.asString() != "sched_param" && it.getSuperClassNotAny()?.classId == ClassId.fromString("kotlinx/cinterop/CStructVar")) {
-//      generateType(it, copyFromTypes)
-//    }
+    if (
+            it.name.asString().endsWith("_cef_base_scoped_t")
+            || it.name.asString().endsWith("_cef_scheme_registrar_t")
+            || it.name.asString().endsWith("_cef_string_utf16_t")
+            || it.name.asString().endsWith("_cef_string_utf8_t")
+            || it.name.asString().endsWith("_cef_string_wide_t")
+    ) {
+      return@forEach
+    }
+
+    generateType2(it)
   }
 }
 
