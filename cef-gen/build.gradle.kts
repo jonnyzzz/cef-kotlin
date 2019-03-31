@@ -44,7 +44,7 @@ setupCefConfigurations {
 
     val targetDir = project(":cef-mpp").buildDir / "generated-cef"
     val klibFile = project(":cef-mpp").buildDir / "classes/kotlin/macosX64/main/cef-mpp-cinterop-kotlinCefInterop.klib"
-    val cefIncludes = includeDir / "include"
+    val cefIncludes = includeDir
 
     doFirst {
       delete(targetDir)

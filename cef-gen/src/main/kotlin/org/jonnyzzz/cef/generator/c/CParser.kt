@@ -3,13 +3,14 @@ package org.jonnyzzz.cef.generator.c
 import java.io.File
 
 data class CFileInfo(
-        val file: File,
+        val relativeFileName: String,
         val globalFunctions: List<GlobalFunctionNode>,
         val structs: List<StructNode>
 )
 
 
-fun parseCFile(includeFile: File,
+fun parseCFile(baseDir: File,
+               includeFile: File,
                debug: Boolean = false
 ): CFileInfo {
   val includeFileName = includeFile.nameWithoutExtension
@@ -34,7 +35,7 @@ fun parseCFile(includeFile: File,
   val structs = lookupStructs(blocks)
   if (debug) debugStructs(structs)
 
-  return CFileInfo(includeFile, globalFunctions, structs)
+  return CFileInfo(includeFile.relativeTo(baseDir).path, globalFunctions, structs)
 }
 
 private fun debugParsing(blocks: List<BracketsTreeNode>) {

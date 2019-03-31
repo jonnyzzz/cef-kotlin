@@ -44,7 +44,9 @@ private fun mainImpl(args: Array<String>) {
   val klibPath = args.getOrNull(0)?.let { File(it).absoluteFile } ?: error("Failed to find .klib")
   val cefIncludesDir = args.getOrNull(1)?.let { File(it).absoluteFile } ?: error("Failed to find CEF includes dir")
   val outputDir = args.getOrNull(2)?.let { File(it).absoluteFile } ?: error("Failed to find target directory")
-  val stdlibPath = File(System.getProperty("user.home")) / ".konan" / "kotlin-native-macos-1.1.2" / "klib" / "common" / "stdlib"
+
+  //TODO: resolve correct K/N library path (aka internal version)!
+  val stdlibPath = File(System.getProperty("user.home")) / ".konan" / "kotlin-native-macos-1.2-eap-9117" / "klib" / "common" / "stdlib"
 
   val stdlib = createKonanLibrary(
           libraryFile = KFile(stdlibPath.toPath()),

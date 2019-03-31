@@ -19,7 +19,8 @@ class CefStruct(
         val file: CFileInfo,
         val struct: StructNode
 ) : CDocumented {
-  override val docComment by struct::docComment
+  override val docComment
+    get() = struct.docComment + "\n\ncef source file -- ${file.relativeFileName}"
 
   val structFieldsOrder get() = struct.members.map { it.value.name }
 
@@ -56,17 +57,17 @@ class CefDeclarations(
 }
 
 fun loadCefDeclarations(includesDir: File): CefDeclarations {
-  val allHeaders = Files.walk((includesDir / "capi").toPath())
+  val allHeaders = Files.walk((includesDir / "include/capi").toPath())
           .map { it.toFile() }
           .filter { it.isFile && it.name.endsWith(".h") }
           .toList() +
-          includesDir / "internal/cef_types.h" +
-          includesDir / "internal/cef_types_mac.h" +
-          includesDir / "internal/cef_string_types.h"
+          includesDir / "include/internal/cef_types.h" +
+          includesDir / "include/internal/cef_types_mac.h" +
+          includesDir / "include/internal/cef_string_types.h"
 
   val fileInfos = allHeaders.map { header ->
     try {
-      parseCFile(header)
+      parseCFile(includesDir, header)
     } catch (t: Throwable) {
       throw Error("Failed to parse ${header.name}", t)
     }
