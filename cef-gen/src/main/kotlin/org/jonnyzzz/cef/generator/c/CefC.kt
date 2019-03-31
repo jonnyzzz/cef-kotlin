@@ -21,6 +21,8 @@ class CefStruct(
 ) : CDocumented {
   override val docComment by struct::docComment
 
+  val structFieldsOrder get() = struct.members.map { it.value.name }
+
   fun findField(p: PropertyDescriptor) = struct.members[p.name.asString()] as? StructField
   fun findFunction(p: PropertyDescriptor) = struct.members[p.name.asString()] as? StructFunctionPointer
 }

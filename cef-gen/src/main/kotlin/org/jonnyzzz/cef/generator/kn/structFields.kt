@@ -4,43 +4,49 @@ import com.squareup.kotlinpoet.ClassName
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jonnyzzz.cef.generator.asNullableCPointer
 import org.jonnyzzz.cef.generator.c.CefStruct
-import org.jonnyzzz.cef.generator.toClassName
 import org.jonnyzzz.cef.generator.toTypeName
 
 
 fun detectProperties(clazz: ClassDescriptor,
                      cefCStruct: CefStruct?,
-                     rawStruct: ClassName) = sequence<FieldDescriptor> {
-
-  clazz.allMeaningfulProperties().forEach { p ->
-    val name = p.name.asString()
-    val propName = name.split("_").run {
-      first() + drop(1).joinToString("") { it.capitalize() }
-    }
-
-    val funType = detectFunctionPropertyType(p)
-    if (funType != null) {
-      val cefFunction = cefCStruct?.findFunction(p)
-
-      val firstParam = funType.firstOrNull()
-      require(firstParam != null && firstParam == rawStruct.asNullableCPointer()) {
-        "First parameter of $rawStruct must be self reference, but was $firstParam}"
+                     rawStruct: ClassName): List<FieldDescriptor> {
+  val members = sequence<FieldDescriptor> {
+    clazz.allMeaningfulProperties().forEach { p ->
+      val name = p.name.asString()
+      val propName = name.split("_").run {
+        first() + drop(1).joinToString("") { it.capitalize() }
       }
 
-      val fReturnType = funType.last()
-      val THIS = DetectedFunctionParam("THIS", firstParam)
-      val fParams = funType.dropLast(1).drop(1).mapIndexed { idx, paramType ->
-        DetectedFunctionParam(
-                cefFunction?.arguments?.getOrNull(idx + 1)?.name ?: "p$idx",
-                paramType
-        ).replaceToKotlinTypes()
-      }
+      val funType = detectFunctionPropertyType(p)
+      if (funType != null) {
+        val cefFunction = cefCStruct?.findFunction(p)
 
-      yield(FunctionalPropertyDescriptor(name, propName, THIS, fParams, fReturnType, cefFunction))
-    } else {
-      val cefMember = cefCStruct?.findField(p)
-      yield(FieldPropertyDescriptor(name, propName, p.type.toTypeName(), cefMember, p.isVar).replaceToKotlinTypes())
+        val firstParam = funType.firstOrNull()
+        require(firstParam != null && firstParam == rawStruct.asNullableCPointer()) {
+          "First parameter of $rawStruct must be self reference, but was $firstParam}"
+        }
+
+        val fReturnType = funType.last()
+        val THIS = DetectedFunctionParam("THIS", firstParam)
+        val fParams = funType.dropLast(1).drop(1).mapIndexed { idx, paramType ->
+          DetectedFunctionParam(
+                  cefFunction?.arguments?.getOrNull(idx + 1)?.name ?: "p$idx",
+                  paramType
+          ).replaceToKotlinTypes()
+        }
+
+        yield(FunctionalPropertyDescriptor(name, propName, THIS, fParams, fReturnType, cefFunction))
+      } else {
+        val cefMember = cefCStruct?.findField(p)
+        yield(FieldPropertyDescriptor(name, propName, p.type.toTypeName(), cefMember, p.isVar).replaceToKotlinTypes())
+      }
     }
-  }
-}.toList()
+  }.toList()
+
+  if (cefCStruct == null) return members
+
+  val membersIndex = cefCStruct.structFieldsOrder.mapIndexed { k, v -> v to k }.toMap()
+  val originalNames = members.mapIndexed { k, v -> v.cFieldName to (k + membersIndex.size) }.toMap()
+  return members.sortedWith(compareBy { membersIndex[it.cFieldName] ?: originalNames[it.cFieldName] ?: 0 })
+}
 
