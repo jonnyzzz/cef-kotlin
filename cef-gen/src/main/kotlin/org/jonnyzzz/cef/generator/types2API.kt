@@ -31,6 +31,9 @@ fun CefKNTypeInfo.generateKInterface(): TypeSpec.Builder {
         p.propType.isUInt() -> {
           parameterSpec.defaultValue("0U")
         }
+        p.propType.isString() -> {
+          parameterSpec.defaultValue("%S", "")
+        }
       }
 
       constr.addParameter(parameterSpec.build())
@@ -65,6 +68,10 @@ fun CefKNTypeInfo.generateKInterface(): TypeSpec.Builder {
       p.returnType.isInt() -> {
         fSpec.addModifiers(KModifier.OPEN)
         fSpec.addStatement("return 0")
+      }
+      p.returnType.isString() -> {
+        fSpec.addModifiers(KModifier.OPEN)
+        fSpec.addStatement("return %S", "")
       }
       p.returnType.isUInt() -> {
         fSpec.addModifiers(KModifier.OPEN)
