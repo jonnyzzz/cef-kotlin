@@ -66,9 +66,6 @@ fun main(args: Array<String>): Unit = memScoped {
       url.copyFrom("https://jonnyzzz.com")
       cef_browser_host_create_browser(windowInfo.wrapKtoCef(this@memScoped), client.wrapKtoCef(), url.ptr, settings.wrapKtoCef(this@memScoped), null)
     }
-
-    override fun onRenderProcessThreadCreated(extra_info: CPointer<_cef_list_value_t>?) {}
-    override fun onScheduleMessagePumpWork(delay_ms: Long) {}
   }
 
   val app = object : KCefApp() {
