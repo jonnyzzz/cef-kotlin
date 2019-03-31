@@ -10,7 +10,7 @@ sealed class FieldDescriptor : KDocumented {
 }
 
 data class FieldPropertyDescriptor(
-        override val cFieldName : String,
+        override val cFieldName: String,
         val propName: String,
         val propType: TypeName,
         val cefMember: StructField?,
@@ -28,13 +28,16 @@ data class FieldPropertyDescriptor(
 }
 
 data class FunctionalPropertyDescriptor(
-        override val cFieldName : String,
+        override val cFieldName: String,
         val funName: String,
         val THIS: DetectedFunctionParam,
         val parameters: List<DetectedFunctionParam>,
         val returnType: TypeName,
-        val cefFunctionPointer: StructFunctionPointer?
+        val cefFunctionPointer: StructFunctionPointer?,
+        private val isBase: Boolean = false
 ) : FieldDescriptor() {
+
+  val parameterNamesList get() = parameters.joinToString(", ") { it.fromCefToKotlin(it.paramName) }
 
   override val docComment: String?
     get() = cefFunctionPointer?.docComment

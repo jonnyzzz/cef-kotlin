@@ -35,7 +35,18 @@ private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = ce
   )
           .addImport("org.jonnyzzz.cef", "value", "asString", "copyFrom")
 
-  kotlinToCefFile.addType(generateStructWrapper().build())
-  kotlinToCefFile.addType(generateImplBase(this).build())
+  when {
+    rawStruct == cefBaseRefCounted -> { }
+    isCefBased -> {
+      kotlinToCefFile.addType(generateStructWrapper().build())
+      kotlinToCefFile.addFunction(generateWrapKtoCef2(this).build())
+      kotlinToCefFile.addFunction(generateWrapKtoCef(this).build())
+    }
+    else -> {
+      kotlinToCefFile.addFunction(generateWrapKtoCefNoBase2(this).build())
+      kotlinToCefFile.addFunction(generateWrapKtoCefNoBase(this).build())
+    }
+  }
+
   kotlinToCefFile.build().writeTo("k2cef")
 }

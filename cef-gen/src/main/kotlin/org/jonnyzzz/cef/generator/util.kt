@@ -28,6 +28,7 @@ val cefBaseRefCountedKImpl = ClassName("org.jonnyzzz.cef.internal", "KCefRefCoun
 val kotlinString = ClassName("kotlin", "String")
 
 val memberScopeType = ClassName("kotlinx.cinterop", "MemScope")
+val arenaType = ClassName("kotlinx.cinterop", "Arena")
 val stableRef = ClassName("kotlinx.cinterop", "StableRef")
 val cValueType = ClassName("kotlinx.cinterop", "CValue")
 val cPointerType = ClassName("kotlinx.cinterop", "CPointer")
@@ -40,8 +41,12 @@ val fnStaticCFunction = MemberName("kotlinx.cinterop", "staticCFunction")
 val fnMemberAt = MemberName("kotlinx.cinterop", "memberAt")
 
 val fnPosixMemset = MemberName("platform.posix", "memset")
+val fnPtr = MemberName("kotlinx.cinterop", "ptr")
 val fnReinterpret = MemberName("kotlinx.cinterop", "reinterpret")
 val fnAsStableRef = MemberName("kotlinx.cinterop", "asStableRef")
+val fnCefStablePrt = MemberName("org.jonnyzzz.cef.internal", "stablePtr")
+val fnAlloc = MemberName("kotlinx.cinterop", "alloc")
+val fnCValue = MemberName("kotlinx.cinterop", "cValue")
 
 fun ClassifierDescriptor.toClassName(): ClassName = when(val firstParent = parents.first()) {
   is ClassDescriptor -> firstParent.toClassName().nestedClass(name.asString())
@@ -59,6 +64,7 @@ fun ClassName.asNullableCValue() = asCValue().copy(nullable = true)
 
 fun TypeName.isUnit() = this == UNIT
 fun TypeName.isInt() = this == INT
+fun TypeName.isString() = this == ClassName("kotlin", "String")
 fun TypeName.isUInt() = this == ClassName("kotlin", "UInt")
 
 fun KotlinType.toTypeName(): TypeName {

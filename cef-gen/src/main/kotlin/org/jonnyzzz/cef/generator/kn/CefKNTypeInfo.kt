@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.types.TypeSubstitution
 import org.jonnyzzz.cef.generator.GeneratorParameters
+import org.jonnyzzz.cef.generator.asCPointer
 import org.jonnyzzz.cef.generator.c.CefStruct
 import org.jonnyzzz.cef.generator.cefBaseRefCounted
 import org.jonnyzzz.cef.generator.cefGeneratedPackage
@@ -16,8 +17,8 @@ data class CefKNTypeInfo(
         val rawStruct: ClassName,
         private val properties: List<FieldDescriptor>,
 
-        val cefCStruct : CefStruct?,
-        val cefBased : CefKNTypeInfo?
+        val cefCStruct: CefStruct?,
+        val cefBased: CefKNTypeInfo?
 ) : KDocumented {
 
   override val docComment: String?
@@ -33,11 +34,11 @@ data class CefKNTypeInfo(
   val kStructTypeName = ClassName(cefGeneratedPackage, "K${typeName}Struct")
   val kImplBaseTypeName = ClassName(cefGeneratedPackage, "K${typeName}ImplBase")
 
-  val pointedName = "pointed_$cleanName"
-  val typeClassName = ClassName(cefGeneratedPackage, typeName)
+  val rawStructPointer get() = rawStruct.asCPointer()
 
   val isCefBased get() = cefBased != null
 
+  val wrapKtoCefName = "wrapKtoCef"
 
   val functionProperties get() = properties.filterIsInstance<FunctionalPropertyDescriptor>()
   val fieldProperties get() = properties.filterIsInstance<FieldPropertyDescriptor>()
