@@ -53,7 +53,7 @@ setupCefConfigurations {
       }
     }
 
-    val atomicFuVersion = "0.12.1"
+    val atomicFuVersion = "0.12.2-eap13-125"
 
     sourceSets {
       val commonMain by getting {

@@ -48,14 +48,14 @@ private fun mainImpl(args: Array<String>) {
 
   val stdlib = createKonanLibrary(
           libraryFile = KFile(stdlibPath.toPath()),
-          currentAbiVersion = 5 /*TODO: HACK!*/,
+          currentAbiVersion = 8 /*TODO: HACK!*/,
           target = null,
           isDefault = true
   )
 
   val library = createKonanLibrary(
           libraryFile = KFile(klibPath.toPath()),
-          currentAbiVersion = 5 /*TODO: HACK!*/,
+          currentAbiVersion = 8 /*TODO: HACK!*/,
           target = KonanTarget.MACOS_X64 /*TODO: cross platform*/
   )
 
@@ -64,7 +64,7 @@ private fun mainImpl(args: Array<String>) {
   println("library - ${library.libraryName}")
   println("library - ${library.linkerOpts}")
 
-  val storageManager = LockBasedStorageManager()
+  val storageManager = LockBasedStorageManager("debug-text")
   val versionSpec = LanguageVersionSettingsImpl(LanguageVersion.LATEST_STABLE, ApiVersion.LATEST_STABLE)
   val module = DefaultDeserializedDescriptorFactory.createDescriptorAndNewBuiltIns(library, versionSpec, storageManager)
   val stdlibModule = DefaultDeserializedDescriptorFactory.createDescriptor(stdlib, versionSpec, storageManager, module.builtIns)
