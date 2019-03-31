@@ -25,10 +25,10 @@ fun GeneratorParameters.generateCopyFunctions(clazzez: List<ClassDescriptor>) {
 
   copyFromTypes = clazzez.mapNotNull {
     if (it.name.asString() != "sched_param" && it.getSuperClassNotAny()?.classId == ClassId.fromString("kotlinx/cinterop/CStructVar")) {
-      println("${it.name.asString()} - generate")
+      //println("${it.name.asString()} - generate")
       generateCopyFunction(it, poet)
     } else {
-      println("${it.name.asString()} - SKIP")
+      //println("${it.name.asString()} - SKIP")
       null
     }
   }.toSet()
