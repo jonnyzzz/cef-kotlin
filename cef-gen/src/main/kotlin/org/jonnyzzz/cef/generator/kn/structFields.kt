@@ -27,10 +27,15 @@ fun detectProperties(clazz: ClassDescriptor,
         }
 
         val fReturnType = funType.last()
-        val THIS = DetectedFunctionParam("THIS", firstParam)
+        val THIS = DetectedFunctionParam("_this", firstParam)
         val fParams = funType.dropLast(1).drop(1).mapIndexed { idx, paramType ->
+          //TODO: assert there is no object and obj parameters at the same function
+
+          var paramName = cefFunction?.arguments?.getOrNull(idx + 1)?.name ?: "p$idx"
+          if (paramName == "object") paramName = "obj"
+
           DetectedFunctionParam(
-                  cefFunction?.arguments?.getOrNull(idx + 1)?.name ?: "p$idx",
+                  paramName,
                   paramType
           ).replaceToKotlinTypes()
         }
