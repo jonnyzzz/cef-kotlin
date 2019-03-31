@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jonnyzzz.cef.generator.kn.DetectedFunctionParam
 import org.jonnyzzz.cef.generator.kn.detectFunctionPropertyType
+import org.jonnyzzz.cef.generator.kn.tokenizeNames
 
 fun GeneratorParameters.generateValFunctions(props: List<PropertyDescriptor>) {
   val poet = FileSpec.builder(
@@ -21,7 +22,7 @@ fun GeneratorParameters.generateValFunctions(props: List<PropertyDescriptor>) {
 }
 
 private fun GeneratorParameters.generateValFunctionsPointer(prop: PropertyDescriptor, poet: FileSpec.Builder) {
-  val propName = prop.name.asString().split("_").run {
+  val propName = prop.name.asString().tokenizeNames().run {
     first() + drop(1).joinToString("") { it.capitalize() }
   }
 

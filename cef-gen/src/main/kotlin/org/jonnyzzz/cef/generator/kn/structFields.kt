@@ -13,7 +13,7 @@ fun detectProperties(clazz: ClassDescriptor,
   val members = sequence<FieldDescriptor> {
     clazz.allMeaningfulProperties().forEach { p ->
       val name = p.name.asString()
-      val propName = name.split("_").run {
+      val propName = name.tokenizeNames().run {
         first() + drop(1).joinToString("") { it.capitalize() }
       }
 
@@ -32,6 +32,8 @@ fun detectProperties(clazz: ClassDescriptor,
           //TODO: assert there is no object and obj parameters at the same function
 
           var paramName = cefFunction?.arguments?.getOrNull(idx + 1)?.name ?: "p$idx"
+
+          //TODO: fix related javadoc!
           if (paramName == "object") paramName = "obj"
 
           DetectedFunctionParam(
@@ -40,6 +42,7 @@ fun detectProperties(clazz: ClassDescriptor,
           ).replaceToKotlinTypes()
         }
 
+        //TODO: replace |name| with [name] for kDoc
         yield(FunctionalPropertyDescriptor(name, propName, THIS, fParams, fReturnType, cefFunction))
       } else {
         val cefMember = cefCStruct?.findField(p)
