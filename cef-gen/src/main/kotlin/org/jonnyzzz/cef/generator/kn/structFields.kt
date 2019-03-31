@@ -42,6 +42,10 @@ fun detectProperties(clazz: ClassDescriptor,
           ).replaceToKotlinTypes()
         }
 
+        // Implementation plan
+        // - map return types and parameters (requires a list of all types for mapping
+        // - map Int to bool (e.g. from javadoc return? true (1) and false (0) messages )
+
         //TODO: replace |name| with [name] for kDoc
         yield(FunctionalPropertyDescriptor(name, propName, THIS, fParams, fReturnType, cefFunction))
       } else {
