@@ -3,8 +3,8 @@ package org.jonnyzzz.cef.generator
 import com.squareup.kotlinpoet.FileSpec
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
-import org.jonnyzzz.cef.generator.kn.CefKNTypeInfo
-import org.jonnyzzz.cef.generator.kn.cefTypeInfo
+import org.jonnyzzz.cef.generator.model.CefKNTypeInfo
+import org.jonnyzzz.cef.generator.model.cefTypeInfo
 
 
 fun GeneratorParameters.generateTypes2(clazzez: List<ClassDescriptor>) {

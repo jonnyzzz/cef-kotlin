@@ -1,4 +1,4 @@
-package org.jonnyzzz.cef.generator.kn
+package org.jonnyzzz.cef.generator.model
 
 import com.squareup.kotlinpoet.ClassName
 import org.jetbrains.kotlin.descriptors.ClassDescriptor

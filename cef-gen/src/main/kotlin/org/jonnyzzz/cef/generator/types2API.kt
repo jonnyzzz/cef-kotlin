@@ -5,8 +5,8 @@ import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
-import org.jonnyzzz.cef.generator.kn.CefKNTypeInfo
-import org.jonnyzzz.cef.generator.kn.addKdoc
+import org.jonnyzzz.cef.generator.model.CefKNTypeInfo
+import org.jonnyzzz.cef.generator.model.addKdoc
 
 fun CefKNTypeInfo.generateKInterface(): TypeSpec.Builder {
   val kInterface = TypeSpec.classBuilder(kInterfaceTypeName).addKdoc(this)

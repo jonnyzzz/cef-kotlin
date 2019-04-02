@@ -3,7 +3,7 @@ package org.jonnyzzz.cef.generator
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.ParameterSpec
-import org.jonnyzzz.cef.generator.kn.CefKNTypeInfo
+import org.jonnyzzz.cef.generator.model.CefKNTypeInfo
 
 
 fun GeneratorParameters.generateWrapKtoCefNoBase2(info: CefKNTypeInfo): FunSpec.Builder = info.run {

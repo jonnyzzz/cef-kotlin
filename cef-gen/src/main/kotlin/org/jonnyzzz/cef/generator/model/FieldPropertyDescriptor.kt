@@ -1,8 +1,10 @@
-package org.jonnyzzz.cef.generator.kn
+package org.jonnyzzz.cef.generator.model
 
 import com.squareup.kotlinpoet.TypeName
 import org.jonnyzzz.cef.generator.c.StructField
 import org.jonnyzzz.cef.generator.c.StructFunctionPointer
+import org.jonnyzzz.cef.generator.kn.TypeReplaceableHost
+import org.jonnyzzz.cef.generator.kn.fromCefToKotlin
 
 sealed class FieldDescriptor : KDocumented {
   abstract val cFieldName: String
@@ -26,6 +28,20 @@ data class FieldPropertyDescriptor(
   override fun replaceType(newType: TypeName) = copy(originalTypeName = propType, propType = newType)
 }
 
+
+data class DetectedFunctionParam(
+        val paramName: String,
+        val paramType: TypeName,
+        //the C declared type name, before type mapping
+        override val originalTypeName: TypeName? = null
+) : TypeReplaceableHost<DetectedFunctionParam> {
+  override val type: TypeName
+    get() = paramType
+
+  override fun replaceType(newType: TypeName) = copy(originalTypeName = paramType, paramType = newType)
+}
+
+
 data class FunctionalPropertyDescriptor(
         override val cFieldName: String,
         val funName: String,
@@ -40,3 +56,4 @@ data class FunctionalPropertyDescriptor(
   override val docComment: String?
     get() = cefFunctionPointer?.docComment
 }
+

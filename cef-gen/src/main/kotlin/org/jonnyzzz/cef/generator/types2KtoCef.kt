@@ -10,8 +10,8 @@ import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
-import org.jonnyzzz.cef.generator.kn.CefKNTypeInfo
-import org.jonnyzzz.cef.generator.kn.FunctionalPropertyDescriptor
+import org.jonnyzzz.cef.generator.model.CefKNTypeInfo
+import org.jonnyzzz.cef.generator.model.FunctionalPropertyDescriptor
 import org.jonnyzzz.cef.generator.kn.fromCefToKotlin
 
 fun CefKNTypeInfo.generateStructWrapper(): TypeSpec.Builder {

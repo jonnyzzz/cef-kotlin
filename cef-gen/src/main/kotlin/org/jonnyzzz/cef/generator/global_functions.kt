@@ -5,9 +5,9 @@ import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
-import org.jonnyzzz.cef.generator.kn.DetectedFunctionParam
+import org.jonnyzzz.cef.generator.model.DetectedFunctionParam
 import org.jonnyzzz.cef.generator.kn.detectFunctionPropertyType
-import org.jonnyzzz.cef.generator.kn.tokenizeNames
+import org.jonnyzzz.cef.generator.model.tokenizeNames
 
 fun GeneratorParameters.generateValFunctions(props: List<PropertyDescriptor>) {
   val poet = FileSpec.builder(
@@ -34,7 +34,8 @@ private fun GeneratorParameters.generateValFunctionsPointer(prop: PropertyDescri
 
   val fReturnType = funType.last()
   val fParams = funType.dropLast(1).mapIndexed { idx, it ->
-    DetectedFunctionParam(cefFunction?.function?.arguments?.getOrNull(idx)?.name ?: "p$idx", it)
+    DetectedFunctionParam(cefFunction?.function?.arguments?.getOrNull(idx)?.name
+            ?: "p$idx", it)
   }
 
   fParams.forEach {

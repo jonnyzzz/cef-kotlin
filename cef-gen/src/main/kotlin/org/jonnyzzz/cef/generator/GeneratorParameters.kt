@@ -5,7 +5,7 @@ import com.squareup.kotlinpoet.TypeName
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.types.KotlinType
 import org.jonnyzzz.cef.generator.c.CefDeclarations
-import org.jonnyzzz.cef.generator.kn.CefKNTypeInfo
+import org.jonnyzzz.cef.generator.model.CefKNTypeInfo
 import java.io.File
 
 data class GeneratorParameters(

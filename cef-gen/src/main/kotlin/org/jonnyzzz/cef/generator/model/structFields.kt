@@ -1,9 +1,12 @@
-package org.jonnyzzz.cef.generator.kn
+package org.jonnyzzz.cef.generator.model
 
 import com.squareup.kotlinpoet.ClassName
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jonnyzzz.cef.generator.asNullableCPointer
 import org.jonnyzzz.cef.generator.c.CefStruct
+import org.jonnyzzz.cef.generator.kn.allMeaningfulProperties
+import org.jonnyzzz.cef.generator.kn.detectFunctionPropertyType
+import org.jonnyzzz.cef.generator.kn.replaceToKotlinTypes
 import org.jonnyzzz.cef.generator.toTypeName
 
 

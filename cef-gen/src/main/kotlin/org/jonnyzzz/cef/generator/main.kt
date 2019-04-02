@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperInterfaces
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jonnyzzz.cef.generator.c.loadCefDeclarations
-import org.jonnyzzz.cef.generator.kn.cefTypeInfo
+import org.jonnyzzz.cef.generator.model.cefTypeInfo
 import java.io.File
 import java.util.*
 
