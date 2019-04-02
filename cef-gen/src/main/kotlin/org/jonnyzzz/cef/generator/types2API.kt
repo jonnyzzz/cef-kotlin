@@ -1,37 +1,63 @@
 package org.jonnyzzz.cef.generator
 
+import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.TypeSpec
-import org.jonnyzzz.cef.generator.model.CefKNTypeInfo
+import org.jonnyzzz.cef.generator.model.KDocumented
 import org.jonnyzzz.cef.generator.model.addKdoc
 
-fun CefKNTypeInfo.generateKInterface(): TypeSpec.Builder {
+interface KNApiMember : KDocumented {
+  val memberName: String
+  val returnType: TypeName
+}
+
+interface KNApiField : KNApiMember
+
+interface KNApiFunctionParam {
+  val paramName: String
+  val paramType: TypeName
+}
+
+interface KNApiFunction : KNApiMember {
+  val parameters: List<KNApiFunctionParam>
+}
+
+interface KNApiTypeInfo : KDocumented {
+  val kInterfaceTypeName: ClassName
+
+  val methods: List<KNApiFunction>
+  val fields: List<KNApiField>
+}
+
+
+fun KNApiTypeInfo.generateKInterface(): TypeSpec.Builder {
   val kInterface = TypeSpec.classBuilder(kInterfaceTypeName).addKdoc(this)
 
-  if (functionProperties.isNotEmpty()) {
+  if (methods.isNotEmpty()) {
     kInterface.addModifiers(KModifier.ABSTRACT)
   }
 
-  if (fieldProperties.isNotEmpty()) {
+  if (fields.isNotEmpty()) {
     val constr = FunSpec.constructorBuilder()
-    fieldProperties.forEach { p ->
-      val parameterSpec = ParameterSpec.builder(p.propName, p.propType)
+    fields.forEach { p ->
+      val parameterSpec = ParameterSpec.builder(p.memberName, p.returnType)
 
       //default implementation for nullable types
       when {
-        p.propType.isNullable -> {
+        p.returnType.isNullable -> {
           parameterSpec.defaultValue("null")
         }
-        p.propType.isInt() -> {
+        p.returnType.isInt() -> {
           parameterSpec.defaultValue("0")
         }
-        p.propType.isUInt() -> {
+        p.returnType.isUInt() -> {
           parameterSpec.defaultValue("0U")
         }
-        p.propType.isString() -> {
+        p.returnType.isString() -> {
           parameterSpec.defaultValue("%S", "")
         }
       }
@@ -41,14 +67,14 @@ fun CefKNTypeInfo.generateKInterface(): TypeSpec.Builder {
 
     kInterface.primaryConstructor(constr.build())
 
-    fieldProperties.forEach { p ->
-      val pSpec = PropertySpec.builder(p.propName, p.propType).mutable(true).addKdoc(p).initializer(p.propName)
+    fields.forEach { p ->
+      val pSpec = PropertySpec.builder(p.memberName, p.returnType).mutable(true).addKdoc(p).initializer(p.memberName)
       kInterface.addProperty(pSpec.build())
     }
   }
 
-  functionProperties.forEach { p ->
-    val fSpec = FunSpec.builder(p.funName).addKdoc(p)
+  methods.forEach { p ->
+    val fSpec = FunSpec.builder(p.memberName).addKdoc(p)
 
     p.parameters.forEach {
       fSpec.addParameter(it.paramName, it.paramType)

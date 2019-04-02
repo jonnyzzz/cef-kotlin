@@ -1,12 +1,25 @@
 package org.jonnyzzz.cef.generator
 
+import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.ParameterSpec
-import org.jonnyzzz.cef.generator.model.CefKNTypeInfo
+import com.squareup.kotlinpoet.TypeName
+import org.jonnyzzz.cef.generator.model.wrapKtoCefName
 
+interface KNSimpleField {
+  val memberName: String
+  val returnType: TypeName
+}
 
-fun GeneratorParameters.generateWrapKtoCefNoBase2(info: CefKNTypeInfo): FunSpec.Builder = info.run {
+interface KNSimpleTypeInfo {
+  val rawStruct: ClassName
+  val kInterfaceTypeName : ClassName
+
+  val fields : List<KNSimpleField>
+}
+
+fun generateWrapKtoCefNoBase2(info: KNSimpleTypeInfo): FunSpec.Builder = info.run {
   FunSpec.builder(wrapKtoCefName).apply {
     returns(rawStruct.asCPointer())
     receiver(kInterfaceTypeName)
@@ -17,10 +30,8 @@ fun GeneratorParameters.generateWrapKtoCefNoBase2(info: CefKNTypeInfo): FunSpec.
 }
 
 
-fun GeneratorParameters.generateWrapKtoCefNoBase(info: CefKNTypeInfo): FunSpec.Builder = info.run {
+fun generateWrapKtoCefNoBase(info: KNSimpleTypeInfo): FunSpec.Builder = info.run {
   FunSpec.builder(wrapKtoCefName).apply {
-    require(cefBaseTypeInfo == null) { "type $rawStruct must not be CefBased!"}
-
     returns(rawStruct.asCValue())
     addParameter(ParameterSpec.builder("obj", kInterfaceTypeName).build())
 
@@ -30,17 +41,15 @@ fun GeneratorParameters.generateWrapKtoCefNoBase(info: CefKNTypeInfo): FunSpec.B
   }
 }
 
-private fun GeneratorParameters.generateCValueInitBlockCefNoBase(info: CefKNTypeInfo): CodeBlock.Builder = info.run {
+private fun generateCValueInitBlockCefNoBase(info: KNSimpleTypeInfo): CodeBlock.Builder = info.run {
   CodeBlock.builder().apply {
-    require(cefBaseTypeInfo == null) { "type $rawStruct must not be CefBased!"}
 
     beginControlFlow("%M<%T>", fnCValue, rawStruct)
     addStatement("%M(%M, 0, %T.size.%M())", fnPosixMemset, fnPtr, rawStruct, fnConvert)
 
-    require(info.functionProperties.isEmpty()) { "type $rawStruct must not have functions!"}
-
-    for (p in info.fieldProperties) {
-      val value = "obj.${p.propName}"
+    for (p in info.fields) {
+      val value = "obj.${p.memberName}"
+/*
 
       //TODO: hide inside FieldPropertyDescriptor!
       if (p.originalTypeName ?: p.propType in copyFromTypeNames) {
@@ -48,6 +57,7 @@ private fun GeneratorParameters.generateCValueInitBlockCefNoBase(info: CefKNType
       } else {
         addStatement("${p.cFieldName} = $value")
       }
+*/
     }
 
     endControlFlow()
