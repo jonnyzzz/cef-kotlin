@@ -2,18 +2,21 @@ package org.jonnyzzz.cef.generator
 
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
+import com.squareup.kotlinpoet.ParameterizedTypeName
+import com.squareup.kotlinpoet.TypeName
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jonnyzzz.cef.generator.model.CefKNTypeInfo
 import org.jonnyzzz.cef.generator.model.DetectedFunctionParam
-import org.jonnyzzz.cef.generator.model.KFunctionalField
 import org.jonnyzzz.cef.generator.model.KDocumented
+import org.jonnyzzz.cef.generator.model.KFunctionalField
 import org.jonnyzzz.cef.generator.model.cefTypeInfo
 
 
 fun GeneratorParameters.generateTypes2(clazzez: List<ClassDescriptor>) {
   val mappedClasses = clazzez.mapNotNull {
     if (it.kind == ClassKind.ENUM_CLASS) {
+      //TODO: handle Enum classes (it is necessary to move API as common code)
       return@mapNotNull null
     }
 
@@ -32,7 +35,25 @@ fun GeneratorParameters.generateTypes2(clazzez: List<ClassDescriptor>) {
 
   println("Detected ${mappedClasses.size} classes to generate...")
 
-  mappedClasses.map { toKNApiTypeInfo(it) }.forEach {
+  val cTokMap = mappedClasses.associate { it.rawStruct to toKNApiTypeInfo(it) }
+
+  fun mapType(type: TypeName): TypeName {
+    if (type is ParameterizedTypeName && type.rawType != cPointerType) {
+      val struct = type.typeArguments.single()
+      val mapped = cTokMap[struct]
+      if (mapped != null) {
+        return mapped.kInterfaceTypeName.copy(nullable = type.isNullable)
+      }
+    }
+
+    //TODO: include mapping of Int to Bool where possible (based on documentation analysis)
+    //TODO: include mapping of cef_string_* to String (by ref parameters are possible!)
+    return type
+  }
+
+  cTokMap.values.map {
+    replaceTypes(it, ::mapType)
+  }.forEach {
     val interfaceFile = FileSpec.builder(
             cefGeneratedPackage,
             it.kInterfaceTypeName.simpleName
@@ -57,10 +78,11 @@ private fun GeneratorParameters.generateType2(clazz: CefKNTypeInfo): Unit = claz
           .addImport("org.jonnyzzz.cef", "value", "asString", "copyFrom")
 
   when {
-    rawStruct == cefBaseRefCounted -> { }
+    rawStruct == cefBaseRefCounted -> {
+    }
     cefBaseTypeInfo != null -> {
       toKNRefCountedTypeInfo(this).run {
-        kotlinToCefFile.addType(generateStructWrapper ().build())
+        kotlinToCefFile.addType(generateStructWrapper().build())
         kotlinToCefFile.addFunction(generateWrapKtoCef2(this).build())
         kotlinToCefFile.addFunction(generateWrapKtoCef(this).build())
       }
@@ -100,10 +122,11 @@ private fun toKNApiTypeInfo(info: CefKNTypeInfo) = object : KNApiTypeInfo, KDocu
 
 private fun toKNRefCountedTypeInfo(info: CefKNTypeInfo) = object : KNRefCountedTypeInfo {
   private val cefBaseTypeInfo = info.cefBaseTypeInfo
+
   init {
-    require(cefBaseTypeInfo != null) { "only CEF Ref counted types, but was $info"}
-    require(info.fieldProperties.isEmpty()) { "type $info must not have fields"}
-    require(cefBaseTypeInfo.fieldProperties.isEmpty()) { "type $info must not have fields in base"}
+    require(cefBaseTypeInfo != null) { "only CEF Ref counted types, but was $info" }
+    require(info.fieldProperties.isEmpty()) { "type $info must not have fields" }
+    require(cefBaseTypeInfo.fieldProperties.isEmpty()) { "type $info must not have fields in base" }
   }
 
   override val rawStruct: ClassName = info.rawStruct
@@ -116,8 +139,8 @@ private fun toKNRefCountedTypeInfo(info: CefKNTypeInfo) = object : KNRefCountedT
     override val paramName = p.paramName
   }
 
-  private fun func(info: List<KFunctionalField>) =  info.map { f ->
-    object: KNRefCountedFunction {
+  private fun func(info: List<KFunctionalField>) = info.map { f ->
+    object : KNRefCountedFunction {
       override val cFieldName = f.cFieldName
       override val kFieldName = f.funName
 
@@ -129,13 +152,14 @@ private fun toKNRefCountedTypeInfo(info: CefKNTypeInfo) = object : KNRefCountedT
 
 private fun toKNSimpleTypeInfo(info: CefKNTypeInfo) = object : KNSimpleTypeInfo {
   init {
-    require(info.cefBaseTypeInfo == null) { "only simple types are allowed, by was $info"}
-    require(info.functionProperties.isEmpty()) { "type $info must not have function properties"}
+    require(info.cefBaseTypeInfo == null) { "only simple types are allowed, by was $info" }
+    require(info.functionProperties.isEmpty()) { "type $info must not have function properties" }
   }
+
   override val rawStruct = info.rawStruct
   override val kInterfaceTypeName = info.kInterfaceTypeName
   override val fields = info.fieldProperties.map { f ->
-    object:KNSimpleField {
+    object : KNSimpleField {
       override val memberName = f.propName
       override val returnType = f.propType
     }
