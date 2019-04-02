@@ -8,7 +8,7 @@ import org.jonnyzzz.cef.generator.kn.CefKNTypeInfo
 
 fun GeneratorParameters.generateWrapKtoCefNoBase2(info: CefKNTypeInfo): FunSpec.Builder = info.run {
   FunSpec.builder(wrapKtoCefName).apply {
-    returns(rawStructPointer)
+    returns(rawStruct.asCPointer())
     receiver(kInterfaceTypeName)
     addParameter("scope", memberScopeType)
 

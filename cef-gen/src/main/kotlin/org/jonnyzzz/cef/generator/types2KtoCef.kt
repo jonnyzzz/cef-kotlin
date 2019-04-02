@@ -43,7 +43,7 @@ fun CefKNTypeInfo.generateStructWrapper(): TypeSpec.Builder {
 
 fun GeneratorParameters.generateWrapKtoCef2(info: CefKNTypeInfo): FunSpec.Builder = info.run {
   FunSpec.builder(wrapKtoCefName).apply {
-    returns(rawStructPointer)
+    returns(rawStruct.asCPointer())
     receiver(kInterfaceTypeName)
 
     addStatement("return $wrapKtoCefName(this)")
@@ -54,7 +54,7 @@ fun GeneratorParameters.generateWrapKtoCef(info: CefKNTypeInfo): FunSpec.Builder
   FunSpec.builder(wrapKtoCefName).apply {
     require(isCefBased) { "type $rawStruct must not be CefBased!"}
 
-    returns(rawStructPointer)
+    returns(rawStruct.asCPointer())
     addParameter(ParameterSpec.builder("obj", kInterfaceTypeName).build())
 
     if (isCefBased) {
