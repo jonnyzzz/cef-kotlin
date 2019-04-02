@@ -17,7 +17,7 @@ val wrapKtoCefName = "wrapKtoCef"
 
 data class CefKNTypeInfo(
         val rawStruct: ClassName,
-        private val properties: List<FieldDescriptor>,
+        private val properties: List<KStructField>,
 
         private val cefCStruct: CefStruct?,
         val cefBaseTypeInfo: CefKNTypeInfo?
@@ -36,8 +36,8 @@ data class CefKNTypeInfo(
   val kInterfaceTypeName = ClassName(cefGeneratedPackage, "K$typeName")
   val kStructTypeName = ClassName(cefGeneratedPackage, "K${typeName}Struct")
 
-  val functionProperties get() = properties.filterIsInstance<FunctionalPropertyDescriptor>()
-  val fieldProperties get() = properties.filterIsInstance<FieldPropertyDescriptor>()
+  val functionProperties get() = properties.filterIsInstance<KFunctionalField>()
+  val fieldProperties get() = properties.filterIsInstance<KPropertyField>()
 }
 
 fun GeneratorParameters.cefTypeInfo(clazz: ClassDescriptor): CefKNTypeInfo {

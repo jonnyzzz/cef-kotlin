@@ -2,12 +2,11 @@ package org.jonnyzzz.cef.generator
 
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
-import com.squareup.kotlinpoet.TypeName
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jonnyzzz.cef.generator.model.CefKNTypeInfo
 import org.jonnyzzz.cef.generator.model.DetectedFunctionParam
-import org.jonnyzzz.cef.generator.model.FunctionalPropertyDescriptor
+import org.jonnyzzz.cef.generator.model.KFunctionalField
 import org.jonnyzzz.cef.generator.model.KDocumented
 import org.jonnyzzz.cef.generator.model.cefTypeInfo
 
@@ -115,7 +114,7 @@ private fun toKNRefCountedTypeInfo(info: CefKNTypeInfo) = object : KNRefCountedT
     override val paramName = p.paramName
   }
 
-  private fun func(info: List<FunctionalPropertyDescriptor>) =  info.map { f ->
+  private fun func(info: List<KFunctionalField>) =  info.map { f ->
     object: KNRefCountedFunction {
       override val cFieldName = f.cFieldName
       override val kFieldName = f.funName

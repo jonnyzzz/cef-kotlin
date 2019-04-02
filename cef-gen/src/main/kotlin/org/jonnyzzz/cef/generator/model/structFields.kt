@@ -1,19 +1,57 @@
 package org.jonnyzzz.cef.generator.model
 
 import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.TypeName
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jonnyzzz.cef.generator.asNullableCPointer
 import org.jonnyzzz.cef.generator.c.CefStruct
+import org.jonnyzzz.cef.generator.c.StructField
+import org.jonnyzzz.cef.generator.c.StructFunctionPointer
 import org.jonnyzzz.cef.generator.kn.allMeaningfulProperties
 import org.jonnyzzz.cef.generator.kn.detectFunctionPropertyType
-import org.jonnyzzz.cef.generator.kn.replaceToKotlinTypes
 import org.jonnyzzz.cef.generator.toTypeName
+
+
+sealed class KStructField : KDocumented {
+  abstract val cFieldName: String
+}
+
+data class KPropertyField(
+        override val cFieldName: String,
+        val propName: String,
+        val propType: TypeName,
+        private val cefMember: StructField?
+) : KStructField() {
+  override val docComment: String?
+    get() = cefMember?.docComment
+}
+
+
+data class DetectedFunctionParam(
+        val paramName: String,
+        val paramType: TypeName
+)
+
+data class KFunctionalField(
+        override val cFieldName: String,
+        val funName: String,
+        val THIS: DetectedFunctionParam,
+        val parameters: List<DetectedFunctionParam>,
+        val returnType: TypeName,
+        private val cefFunctionPointer: StructFunctionPointer?
+) : KStructField() {
+
+  override val docComment: String?
+    get() = cefFunctionPointer?.docComment
+}
+
+
 
 
 fun detectProperties(clazz: ClassDescriptor,
                      cefCStruct: CefStruct?,
-                     rawStruct: ClassName): List<FieldDescriptor> {
-  val members = sequence<FieldDescriptor> {
+                     rawStruct: ClassName): List<KStructField> {
+  val members = sequence<KStructField> {
     clazz.allMeaningfulProperties().forEach { p ->
       val name = p.name.asString()
       val propName = name.tokenizeNames().run {
@@ -42,7 +80,7 @@ fun detectProperties(clazz: ClassDescriptor,
           DetectedFunctionParam(
                   paramName,
                   paramType
-          ).replaceToKotlinTypes()
+          )
         }
 
         // Implementation plan
@@ -50,10 +88,10 @@ fun detectProperties(clazz: ClassDescriptor,
         // - map Int to bool (e.g. from javadoc return? true (1) and false (0) messages )
 
         //TODO: replace |name| with [name] for kDoc
-        yield(FunctionalPropertyDescriptor(name, propName, THIS, fParams, fReturnType, cefFunction))
+        yield(KFunctionalField(name, propName, THIS, fParams, fReturnType, cefFunction))
       } else {
         val cefMember = cefCStruct?.findField(p)
-        yield(FieldPropertyDescriptor(name, propName, p.type.toTypeName(), cefMember).replaceToKotlinTypes())
+        yield(KPropertyField(name, propName, p.type.toTypeName(), cefMember))
       }
     }
   }.toList()

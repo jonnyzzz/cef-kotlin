@@ -7,11 +7,15 @@ import com.squareup.kotlinpoet.TypeSpec
 interface KDocumented {
   val docComment: String?
 }
+
+
 private fun String.sanitize() = replace("%", "%%")
         /// javadoc may contain /* or */, but Kotlin does assume is as comments,
         /// kotlinpoet does not escape it too
         .replace("/*", "/\u200b*")
         .replace("*/", "*\u200b/")
+
+
 
 fun TypeSpec.Builder.addKdoc(d: KDocumented) = apply {
   try {

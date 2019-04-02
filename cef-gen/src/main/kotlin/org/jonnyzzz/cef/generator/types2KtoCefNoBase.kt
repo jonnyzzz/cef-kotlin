@@ -48,16 +48,7 @@ private fun generateCValueInitBlockCefNoBase(info: KNSimpleTypeInfo): CodeBlock.
     addStatement("%M(%M, 0, %T.size.%M())", fnPosixMemset, fnPtr, rawStruct, fnConvert)
 
     for (p in info.fields) {
-      val value = "obj.${p.memberName}"
-/*
-
-      //TODO: hide inside FieldPropertyDescriptor!
-      if (p.originalTypeName ?: p.propType in copyFromTypeNames) {
-        addStatement("${p.cFieldName}.copyFrom($value)")
-      } else {
-        addStatement("${p.cFieldName} = $value")
-      }
-*/
+      addStatement("TODO(%S)", "Implement copy for ${p.memberName}")
     }
 
     endControlFlow()

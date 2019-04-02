@@ -51,7 +51,7 @@ fun GeneratorParameters.generateImplBase(info: CefKNTypeInfo) = info.run {
                       .setterBuilder()
                       .addParameter("value", p.propType)
                       .apply {
-                        //TODO: hide inside FieldPropertyDescriptor!
+                        //TODO: hide inside KPropertyField!
                         if (p.originalTypeName ?: p.propType in copyFromTypeNames) {
                           addStatement("cValue.cef.${p.cFieldName}.copyFrom(value)")
                         } else {
