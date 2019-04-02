@@ -15,6 +15,10 @@ fun String.tokenizeNames() = sequence<String> {
         yield("by")
         yield("index")
       }
+      t == "byident" -> {
+        yield("by")
+        yield("ident")
+      }
       t.isNotEmpty() -> yield(t)
     }
   }
