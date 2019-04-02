@@ -19,7 +19,7 @@ fun GeneratorParameters.generateWrapKtoCefNoBase2(info: CefKNTypeInfo): FunSpec.
 
 fun GeneratorParameters.generateWrapKtoCefNoBase(info: CefKNTypeInfo): FunSpec.Builder = info.run {
   FunSpec.builder(wrapKtoCefName).apply {
-    require(!isCefBased) { "type $rawStruct must not be CefBased!"}
+    require(cefBaseTypeInfo == null) { "type $rawStruct must not be CefBased!"}
 
     returns(rawStruct.asCValue())
     addParameter(ParameterSpec.builder("obj", kInterfaceTypeName).build())
@@ -32,7 +32,7 @@ fun GeneratorParameters.generateWrapKtoCefNoBase(info: CefKNTypeInfo): FunSpec.B
 
 private fun GeneratorParameters.generateCValueInitBlockCefNoBase(info: CefKNTypeInfo): CodeBlock.Builder = info.run {
   CodeBlock.builder().apply {
-    require(!isCefBased) { "type $rawStruct must not be CefBased!"}
+    require(cefBaseTypeInfo == null) { "type $rawStruct must not be CefBased!"}
 
     beginControlFlow("%M<%T>", fnCValue, rawStruct)
     addStatement("%M(%M, 0, %T.size.%M())", fnPosixMemset, fnPtr, rawStruct, fnConvert)

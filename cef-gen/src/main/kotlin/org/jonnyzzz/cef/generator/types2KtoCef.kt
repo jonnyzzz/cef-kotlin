@@ -52,12 +52,12 @@ fun GeneratorParameters.generateWrapKtoCef2(info: CefKNTypeInfo): FunSpec.Builde
 
 fun GeneratorParameters.generateWrapKtoCef(info: CefKNTypeInfo): FunSpec.Builder = info.run {
   FunSpec.builder(wrapKtoCefName).apply {
-    require(isCefBased) { "type $rawStruct must not be CefBased!"}
+    require(cefBaseTypeInfo != null) { "type $rawStruct must not be CefBased!"}
 
     returns(rawStruct.asCPointer())
     addParameter(ParameterSpec.builder("obj", kInterfaceTypeName).build())
 
-    if (isCefBased) {
+    if (cefBaseTypeInfo != null) {
       addStatement("val scope = %T()", arenaType)
     } else {
       addStatement("val scope = this")
@@ -104,7 +104,7 @@ private fun GeneratorParameters.generateCValueInitBlock(info: CefKNTypeInfo): Co
     }
 
     //TODO: merge code!
-    cefBased?.let { cefBase ->
+    cefBaseTypeInfo?.let { cefBase ->
       addStatement("// CEF Base Implementation")
       for (p in cefBase.functionProperties) {
         beginControlFlow("cef.base.${p.cFieldName} = %M", fnStaticCFunction)
@@ -130,7 +130,7 @@ fun GeneratorParameters.generateImplBase(info: CefKNTypeInfo): TypeSpec.Builder 
                           .addParameter("scope", ClassName("kotlinx.cinterop", "MemScope"))
                           .build()
           ).apply {
-            info.cefBased?.let { baseInfo ->
+            info.cefBaseTypeInfo?.let { baseInfo ->
               addSuperinterface(baseInfo.kInterfaceTypeName, CodeBlock.of("%T()", cefBaseRefCountedKImpl))
             }
           }

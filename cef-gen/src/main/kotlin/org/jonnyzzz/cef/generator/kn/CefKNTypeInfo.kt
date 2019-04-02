@@ -17,7 +17,7 @@ data class CefKNTypeInfo(
         private val properties: List<FieldDescriptor>,
 
         val cefCStruct: CefStruct?,
-        val cefBased: CefKNTypeInfo?
+        val cefBaseTypeInfo: CefKNTypeInfo?
 ) : KDocumented {
 
   override val docComment: String?
@@ -33,8 +33,6 @@ data class CefKNTypeInfo(
   val kInterfaceTypeName = ClassName(cefGeneratedPackage, "K$typeName")
   val kStructTypeName = ClassName(cefGeneratedPackage, "K${typeName}Struct")
   val kImplBaseTypeName = ClassName(cefGeneratedPackage, "K${typeName}ImplBase")
-
-  val isCefBased get() = cefBased != null
 
   val wrapKtoCefName = "wrapKtoCef"
 

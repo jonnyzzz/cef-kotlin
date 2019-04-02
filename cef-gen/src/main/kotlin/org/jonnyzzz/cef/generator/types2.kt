@@ -52,7 +52,7 @@ private fun GeneratorParameters.generateType2(clazz: CefKNTypeInfo): Unit = claz
 
   when {
     rawStruct == cefBaseRefCounted -> { }
-    isCefBased -> {
+    cefBaseTypeInfo != null -> {
       kotlinToCefFile.addType(generateStructWrapper().build())
       kotlinToCefFile.addFunction(generateWrapKtoCef2(this).build())
       kotlinToCefFile.addFunction(generateWrapKtoCef(this).build())
