@@ -32,6 +32,17 @@ fun GeneratorParameters.generateTypes2(clazzez: List<ClassDescriptor>) {
 
   println("Detected ${mappedClasses.size} classes to generate...")
 
+  mappedClasses.map { toKNApiTypeInfo(it) }.forEach {
+    val interfaceFile = FileSpec.builder(
+            cefGeneratedPackage,
+            it.kInterfaceTypeName.simpleName
+    )
+
+    interfaceFile.addType(it.generateKInterface().build())
+
+    interfaceFile.writeTo("api")
+  }
+
   mappedClasses.forEach {
     generateType2(it)
   }
@@ -39,15 +50,6 @@ fun GeneratorParameters.generateTypes2(clazzez: List<ClassDescriptor>) {
 
 
 private fun GeneratorParameters.generateType2(clazz: CefKNTypeInfo): Unit = clazz.run {
-  val interfaceFile = FileSpec.builder(
-          cefGeneratedPackage,
-          sourceInterfaceFileName
-  )
-
-  interfaceFile.addType(toKNApiTypeInfo(this).generateKInterface().build())
-  interfaceFile.build().writeTo("api")
-
-
   val kotlinToCefFile = FileSpec.builder(
           cefGeneratedPackage,
           sourceKtoCefFileName

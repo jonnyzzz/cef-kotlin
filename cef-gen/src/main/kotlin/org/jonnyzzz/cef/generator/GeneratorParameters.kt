@@ -12,6 +12,8 @@ data class GeneratorParameters(
         val cefIncludesDir: File,
         val outputDir: File
 ) {
+  fun FileSpec.Builder.writeTo(suffix: String = "") = build().writeTo(suffix)
+
   fun FileSpec.writeTo(suffix: String = "") {
     val target = if(suffix.isEmpty()) outputDir else outputDir / suffix
     target.mkdirs()
