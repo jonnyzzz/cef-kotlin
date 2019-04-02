@@ -57,12 +57,7 @@ fun GeneratorParameters.generateWrapKtoCef(info: CefKNTypeInfo): FunSpec.Builder
     returns(rawStruct.asCPointer())
     addParameter(ParameterSpec.builder("obj", kInterfaceTypeName).build())
 
-    if (cefBaseTypeInfo != null) {
-      addStatement("val scope = %T()", arenaType)
-    } else {
-      addStatement("val scope = this")
-      receiver(memberScopeType)
-    }
+    addStatement("val scope = %T()", arenaType)
 
     addStatement("val stableRef = scope.%M(%T(scope, obj))", fnCefStablePrt, cefBaseRefCountedKImpl)
 

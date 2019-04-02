@@ -50,7 +50,7 @@ fun detectProperties(clazz: ClassDescriptor,
         yield(FunctionalPropertyDescriptor(name, propName, THIS, fParams, fReturnType, cefFunction))
       } else {
         val cefMember = cefCStruct?.findField(p)
-        yield(FieldPropertyDescriptor(name, propName, p.type.toTypeName(), cefMember, p.isVar).replaceToKotlinTypes())
+        yield(FieldPropertyDescriptor(name, propName, p.type.toTypeName(), cefMember).replaceToKotlinTypes())
       }
     }
   }.toList()

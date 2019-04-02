@@ -13,8 +13,7 @@ data class FieldPropertyDescriptor(
         override val cFieldName: String,
         val propName: String,
         val propType: TypeName,
-        val cefMember: StructField?,
-        val isVar: Boolean,
+        private val cefMember: StructField?,
         //the C declared type name, before type mapping
         override val originalTypeName: TypeName? = null
 ) : FieldDescriptor(), TypeReplaceableHost<FieldPropertyDescriptor> {
@@ -33,8 +32,7 @@ data class FunctionalPropertyDescriptor(
         val THIS: DetectedFunctionParam,
         val parameters: List<DetectedFunctionParam>,
         val returnType: TypeName,
-        val cefFunctionPointer: StructFunctionPointer?,
-        private val isBase: Boolean = false
+        private val cefFunctionPointer: StructFunctionPointer?
 ) : FieldDescriptor() {
 
   val parameterNamesList get() = parameters.joinToString(", ") { it.fromCefToKotlin(it.paramName) }
