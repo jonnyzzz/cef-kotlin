@@ -94,18 +94,12 @@ private fun GeneratorParameters.visitModule(module: ModuleDescriptor) {
     }
   }.filter { it.module === module && it.fqName.startsWith(Name.identifier("org.jonnyzzz.cef.interop")) }
   .toList().flatMap {
-    println("package: $it")
     it.fragments
   }.flatMap {
-    println("fragment: $it")
     it.getMemberScope().getContributedDescriptors().filter { it.shouldBePrinted }
   }
 
-  descriptors.forEach {
-    println("${it.javaClass.simpleName}: $it")
-  }
-
-  println("------------\n\n\n")
+  println("------------\n")
 
   resolveCefCDeclarations()
   resolveCefBaseRefCounted(descriptors.filterIsInstance<ClassDescriptor>())

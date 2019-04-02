@@ -3,14 +3,14 @@ package org.jonnyzzz.cef.generator
 import com.squareup.kotlinpoet.FileSpec
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
+import org.jonnyzzz.cef.generator.kn.CefKNTypeInfo
 import org.jonnyzzz.cef.generator.kn.cefTypeInfo
 
 
 fun GeneratorParameters.generateTypes2(clazzez: List<ClassDescriptor>) {
-  clazzez.forEach {
+  val mappedClasses = clazzez.mapNotNull {
     if (it.kind == ClassKind.ENUM_CLASS) {
-      println("Enum ${it.name}")
-      return@forEach
+      return@mapNotNull null
     }
 
     if (
@@ -20,15 +20,21 @@ fun GeneratorParameters.generateTypes2(clazzez: List<ClassDescriptor>) {
             || it.name.asString().endsWith("_cef_string_utf8_t")
             || it.name.asString().endsWith("_cef_string_wide_t")
     ) {
-      return@forEach
+      return@mapNotNull null
     }
 
+    cefTypeInfo(it)
+  }
+
+  println("Detected ${mappedClasses.size} classes to generate...")
+
+  mappedClasses.forEach {
     generateType2(it)
   }
 }
 
 
-private fun GeneratorParameters.generateType2(clazz: ClassDescriptor): Unit = cefTypeInfo(clazz).run {
+private fun GeneratorParameters.generateType2(clazz: CefKNTypeInfo): Unit = clazz.run {
   val interfaceFile = FileSpec.builder(
           cefGeneratedPackage,
           sourceInterfaceFileName
