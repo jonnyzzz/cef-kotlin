@@ -2,6 +2,7 @@ package org.jonnyzzz.cef.generator
 
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.INT
+import com.squareup.kotlinpoet.LONG
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
@@ -47,6 +48,7 @@ val fnAsStableRef = MemberName("kotlinx.cinterop", "asStableRef")
 val fnCefStablePrt = MemberName("org.jonnyzzz.cef.internal", "stablePtr")
 val fnAlloc = MemberName("kotlinx.cinterop", "alloc")
 val fnCValue = MemberName("kotlinx.cinterop", "cValue")
+val fnInvoke = MemberName("kotlinx.cinterop", "invoke")
 
 fun ClassifierDescriptor.toClassName(): ClassName = when(val firstParent = parents.first()) {
   is ClassDescriptor -> firstParent.toClassName().nestedClass(name.asString())
@@ -64,8 +66,10 @@ fun ClassName.asNullableCValue() = asCValue().copy(nullable = true)
 
 fun TypeName.isUnit() = this == UNIT
 fun TypeName.isInt() = this == INT
+fun TypeName.isLong() = this == LONG
 fun TypeName.isString() = this == ClassName("kotlin", "String")
 fun TypeName.isUInt() = this == ClassName("kotlin", "UInt")
+fun TypeName.isULong() = this == ClassName("kotlin", "ULong")
 
 fun KotlinType.toTypeName(): TypeName {
   val rawType = constructor.declarationDescriptor!!.toClassName().copy(isNullable())

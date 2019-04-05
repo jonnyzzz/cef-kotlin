@@ -46,7 +46,7 @@ private fun generateCopyFunction(clazz: ClassDescriptor, poet: FileSpec.Builder)
                           .build()
                   )
                   .addKdoc("Performs deep copy of all\n" +
-                          "fields of the [target] structure\n" +
+                          "kFields of the [target] structure\n" +
                           "into the receiver structure")
                   .receiver(className)
                   .addParameter("target", className)

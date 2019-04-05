@@ -12,9 +12,6 @@ import org.jonnyzzz.cef.generator.shouldBePrinted
 import org.jonnyzzz.cef.generator.toClassName
 import org.jonnyzzz.cef.generator.toTypeName
 
-val wrapKtoCefName = "wrapKtoCef"
-
-
 data class CefKNTypeInfo(
         val rawStruct: ClassName,
         private val properties: List<KStructField>,
@@ -35,6 +32,7 @@ data class CefKNTypeInfo(
 
   val kInterfaceTypeName = ClassName(cefGeneratedPackage, "K$typeName")
   val kStructTypeName = ClassName(cefGeneratedPackage, "K${typeName}Struct")
+  val kWrapperTypeName = ClassName(cefGeneratedPackage, "K${typeName}Wrapper")
 
   val functionProperties get() = properties.filterIsInstance<KFunctionalField>()
   val fieldProperties get() = properties.filterIsInstance<KPropertyField>()

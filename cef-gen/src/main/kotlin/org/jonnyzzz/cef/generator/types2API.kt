@@ -1,63 +1,43 @@
 package org.jonnyzzz.cef.generator
 
-import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.PropertySpec
-import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.TypeSpec
-import org.jonnyzzz.cef.generator.model.KDocumented
 import org.jonnyzzz.cef.generator.model.addKdoc
-
-interface KNApiMember : KDocumented {
-  val memberName: String
-  val returnType: TypeName
-}
-
-interface KNApiField : KNApiMember
-
-interface KNApiFunctionParam {
-  val paramName: String
-  val paramType: TypeName
-}
-
-interface KNApiFunction : KNApiMember {
-  val parameters: List<KNApiFunctionParam>
-}
-
-interface KNApiTypeInfo : KDocumented {
-  val kInterfaceTypeName: ClassName
-
-  val methods: List<KNApiFunction>
-  val fields: List<KNApiField>
-}
 
 
 fun KNApiTypeInfo.generateKInterface(): TypeSpec.Builder {
   val kInterface = TypeSpec.classBuilder(kInterfaceTypeName).addKdoc(this)
 
-  if (methods.isNotEmpty()) {
+  if (kMethods.isNotEmpty()) {
     kInterface.addModifiers(KModifier.ABSTRACT)
   }
 
-  if (fields.isNotEmpty()) {
+  if (kFields.isNotEmpty()) {
     val constr = FunSpec.constructorBuilder()
-    fields.forEach { p ->
-      val parameterSpec = ParameterSpec.builder(p.memberName, p.returnType)
+    kFields.forEach { p ->
+      val parameterSpec = ParameterSpec.builder(p.kFieldName, p.kReturnType)
 
       //default implementation for nullable types
       when {
-        p.returnType.isNullable -> {
+        p.kReturnType.isNullable -> {
           parameterSpec.defaultValue("null")
         }
-        p.returnType.isInt() -> {
+        p.kReturnType.isInt() -> {
           parameterSpec.defaultValue("0")
         }
-        p.returnType.isUInt() -> {
+        p.kReturnType.isLong() -> {
+          parameterSpec.defaultValue("0L")
+        }
+        p.kReturnType.isUInt() -> {
           parameterSpec.defaultValue("0U")
         }
-        p.returnType.isString() -> {
+        p.kReturnType.isULong() -> {
+          parameterSpec.defaultValue("0UL")
+        }
+        p.kReturnType.isString() -> {
           parameterSpec.defaultValue("%S", "")
         }
       }
@@ -67,39 +47,47 @@ fun KNApiTypeInfo.generateKInterface(): TypeSpec.Builder {
 
     kInterface.primaryConstructor(constr.build())
 
-    fields.forEach { p ->
-      val pSpec = PropertySpec.builder(p.memberName, p.returnType).mutable(true).addKdoc(p).initializer(p.memberName)
+    kFields.forEach { p ->
+      val pSpec = PropertySpec.builder(p.kFieldName, p.kReturnType).mutable(true).addKdoc(p).initializer(p.kFieldName)
       kInterface.addProperty(pSpec.build())
     }
   }
 
-  methods.forEach { p ->
-    val fSpec = FunSpec.builder(p.memberName).addKdoc(p)
+  kMethods.forEach { p ->
+    val fSpec = FunSpec.builder(p.kFieldName).addKdoc(p)
 
     p.parameters.forEach {
-      fSpec.addParameter(it.paramName, it.paramType)
+      fSpec.addParameter(it.kParamName, it.kParamType)
     }
 
-    fSpec.returns(p.returnType)
+    fSpec.returns(p.kReturnType)
 
     //default implementation for nullable types
     when {
-      p.returnType.isNullable -> {
+      p.kReturnType.isNullable -> {
         fSpec.addModifiers(KModifier.OPEN)
         fSpec.addStatement("return null")
       }
-      p.returnType.isUnit() -> {
+      p.kReturnType.isUnit() -> {
         fSpec.addModifiers(KModifier.OPEN)
       }
-      p.returnType.isInt() -> {
+      p.kReturnType.isInt() -> {
         fSpec.addModifiers(KModifier.OPEN)
         fSpec.addStatement("return 0")
       }
-      p.returnType.isString() -> {
+      p.kReturnType.isLong() -> {
+        fSpec.addModifiers(KModifier.OPEN)
+        fSpec.addStatement("return 0L")
+      }
+      p.kReturnType.isULong() -> {
+        fSpec.addModifiers(KModifier.OPEN)
+        fSpec.addStatement("return 0UL")
+      }
+      p.kReturnType.isString() -> {
         fSpec.addModifiers(KModifier.OPEN)
         fSpec.addStatement("return %S", "")
       }
-      p.returnType.isUInt() -> {
+      p.kReturnType.isUInt() -> {
         fSpec.addModifiers(KModifier.OPEN)
         fSpec.addStatement("return 0U")
       }
