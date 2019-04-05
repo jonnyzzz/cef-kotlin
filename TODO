@@ -1,0 +1,13 @@
+
+
+From the discussion with Ilya Chernikov:
+ - use libclan
+ - he wrote the very first implementation for cinterop in K/N
+
+From the internet search
+ - an example to traverse declarations with libclang
+   https://bastian.rieck.ru/blog/posts/2015/baby_steps_libclang_ast/
+
+
+
+
