@@ -4,6 +4,7 @@ import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.TypeName
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jonnyzzz.cef.generator.asNullableCPointer
+import org.jonnyzzz.cef.generator.c.CFunctionArgument
 import org.jonnyzzz.cef.generator.c.CefStruct
 import org.jonnyzzz.cef.generator.c.StructField
 import org.jonnyzzz.cef.generator.c.StructFunctionPointer
@@ -29,7 +30,8 @@ data class KPropertyField(
 
 data class DetectedFunctionParam(
         val paramName: String,
-        val paramType: TypeName
+        val paramType: TypeName,
+        val cefParam: CFunctionArgument?
 )
 
 data class KFunctionalField(
@@ -68,18 +70,20 @@ fun detectProperties(clazz: ClassDescriptor,
         }
 
         val fReturnType = funType.last()
-        val THIS = DetectedFunctionParam("_this", firstParam)
+        val THIS = DetectedFunctionParam("_this", firstParam, cefFunction?.arguments?.getOrNull(0))
         val fParams = funType.dropLast(1).drop(1).mapIndexed { idx, paramType ->
           //TODO: assert there is no object and obj parameters at the same function
 
-          var paramName = cefFunction?.arguments?.getOrNull(idx + 1)?.name ?: "p$idx"
+          val cefArgument = cefFunction?.arguments?.getOrNull(idx + 1)
+          var paramName = cefArgument?.name ?: "p$idx"
 
           //TODO: fix related javadoc!
           if (paramName == "object") paramName = "obj"
 
           DetectedFunctionParam(
                   paramName,
-                  paramType
+                  paramType,
+                  cefArgument
           )
         }
 

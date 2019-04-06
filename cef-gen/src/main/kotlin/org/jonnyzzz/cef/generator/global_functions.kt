@@ -34,8 +34,8 @@ private fun GeneratorParameters.generateValFunctionsPointer(prop: PropertyDescri
 
   val fReturnType = funType.last()
   val fParams = funType.dropLast(1).mapIndexed { idx, it ->
-    DetectedFunctionParam(cefFunction?.function?.arguments?.getOrNull(idx)?.name
-            ?: "p$idx", it)
+    val cefParam = cefFunction?.function?.arguments?.getOrNull(idx)
+    DetectedFunctionParam(cefParam?.name ?: "p$idx", it, cefParam)
   }
 
   fParams.forEach {
