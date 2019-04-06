@@ -48,7 +48,7 @@ fun KNApiTypeInfo.generateKInterface(): TypeSpec.Builder {
     kInterface.primaryConstructor(constr.build())
 
     kFields.forEach { p ->
-      val pSpec = PropertySpec.builder(p.kFieldName, p.kReturnType).mutable(true).addKdoc(p).initializer(p.kFieldName)
+      val pSpec = PropertySpec.builder(p.kFieldName, p.kReturnType).mutable(false).addKdoc(p).initializer(p.kFieldName)
       kInterface.addProperty(pSpec.build())
     }
   }

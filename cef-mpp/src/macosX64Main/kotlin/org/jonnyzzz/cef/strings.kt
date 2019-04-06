@@ -10,19 +10,39 @@ import kotlinx.cinterop.ptr
 import kotlinx.cinterop.readBytes
 import kotlinx.cinterop.sizeOf
 import org.jonnyzzz.cef.generated.cefStringToUtf8
+import org.jonnyzzz.cef.interop._cef_string_utf16_t
 import org.jonnyzzz.cef.interop.cef_string_t
+import org.jonnyzzz.cef.interop.cef_string_userfree_alloc
 import org.jonnyzzz.cef.interop.cef_string_userfree_free
+import org.jonnyzzz.cef.interop.cef_string_userfree_utf16_alloc
+import org.jonnyzzz.cef.interop.cef_string_utf16_set
 import org.jonnyzzz.cef.interop.cef_string_utf8_clear
 import org.jonnyzzz.cef.interop.cef_string_utf8_t
 import org.jonnyzzz.cef.interop.cef_string_utf8_to_utf16
 import org.jonnyzzz.cef.interop.char16Var
 import platform.posix.memset
 import kotlin.math.min
+import kotlin.reflect.KMutableProperty1
+import kotlin.reflect.KProperty0
+
+
+fun copyCefString(prop: KProperty0<cef_string_t>, str: _cef_string_utf16_t) {
+  prop.get().copyFrom(str)
+}
+
+
+
 
 fun cef_string_t.copyFrom(str: String) {
   cef_string_userfree_free?.invoke(this.ptr)
   //see https://github.com/cztomczak/cefcapi/blob/master/examples/main_win.c
   cef_string_utf8_to_utf16(str, str.length.convert(), this.ptr)
+}
+
+
+fun cef_string_t.copyFrom(str: cef_string_t) {
+  //TODO optimize me via a better CEF strings APIs
+  copyFrom(str.asString())
 }
 
 fun cef_string_t.toDebugString() = buildString {

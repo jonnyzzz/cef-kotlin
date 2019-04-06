@@ -21,6 +21,11 @@ interface KNBaseMember {
 
 interface KNApiField : KNApiMember
 interface KNSimpleField : KNBaseMember
+interface KNSimplePublicField : KNSimpleField {
+  val api : KNApiField
+
+  val kReturnType get() = api.kReturnType
+}
 
 
 
@@ -85,7 +90,7 @@ interface KNBaseInfo {
 }
 
 interface KNSimpleTypeInfo : KNBaseInfo {
-  val fields : List<KNSimpleField>
+  val fields : List<KNSimplePublicField>
 }
 
 interface KNRefCountedTypeInfo : KNBaseInfo {

@@ -80,4 +80,10 @@ class CefTypeMapperGenerator(
   fun mapTypeFromCefToKCode(context: KNRefCountedPublicFunctionParam, inputVal: String, outputVal: String) =
           mapTypeFromCefToKCode(context.kParamType, context.cParamType, inputVal, outputVal)
 
+  fun mapTypeFromKToCefCode(context: KNSimplePublicField, inputVal: String, outputVal: String) =
+          mapTypeFromKToCefCode(context.kReturnType, context.cReturnType, inputVal, outputVal)
+
+  fun mapTypeFromCefToKCode(context: KNSimplePublicField, inputVal: String, outputVal: String) =
+          mapTypeFromCefToKCode(context.kReturnType, context.cReturnType, inputVal, outputVal)
+
 }

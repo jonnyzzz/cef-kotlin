@@ -10,7 +10,9 @@ fun toKNSimpleTypeInfo(api: KNApiTypeInfo, info: CefKNTypeInfo): KNSimpleTypeInf
     override val api = api
     override val rawStruct = info.rawStruct
     override val fields = info.fieldProperties.map { f ->
-      object : KNSimpleField {
+      val knApiField = api.kFields.single { it.kFieldName == f.propName}
+      object : KNSimplePublicField {
+        override val api = knApiField
         override val cFieldName = f.cFieldName
         override val kFieldName = f.propName
         override val cReturnType = f.propType

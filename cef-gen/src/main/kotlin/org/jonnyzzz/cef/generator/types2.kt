@@ -76,7 +76,8 @@ fun GeneratorParameters.generateTypes2(clazzez: List<ClassDescriptor>) {
             cefGeneratedPackage,
             it.kInterfaceTypeName.simpleName + "Bridge"
     ).addImport("org.jonnyzzz.cef", "value", "asString", "copyFrom")
-    kotlinToCefFile.addFunction(generateWrapKtoCefNoBase(it).build())
+    generateWrapKtoCefNoBase(kotlinToCefFile, it, mapper)
+    kotlinToCefFile.addFunction(generateWrapCefToKNoBase(it, mapper).build())
     kotlinToCefFile.writeTo("k2cef")
   }
 }
