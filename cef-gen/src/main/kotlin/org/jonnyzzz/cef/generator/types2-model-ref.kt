@@ -1,6 +1,5 @@
 package org.jonnyzzz.cef.generator
 
-import com.squareup.kotlinpoet.ClassName
 import org.jonnyzzz.cef.generator.model.CefKNTypeInfo
 import org.jonnyzzz.cef.generator.model.DetectedFunctionParam
 import org.jonnyzzz.cef.generator.model.KFunctionalField
