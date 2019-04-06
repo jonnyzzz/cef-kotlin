@@ -17,10 +17,10 @@ fun generateWrapCefToK(file : FileSpec.Builder, mapper: CefTypeMapperGenerator, 
     superclass(kInterfaceTypeName)
 
     FunSpec.constructorBuilder().apply {
-      addParameter("obj", rawStruct.asCPointer())
+      addParameter("cefStruct", rawStruct.asCPointer())
     }.build().also { primaryConstructor(it) }
 
-    PropertySpec.builder("obj", rawStruct.asCPointer()).initializer("obj").build().also { addProperty(it) }
+    PropertySpec.builder("cefStruct", rawStruct.asCPointer()).initializer("cefStruct").build().also { addProperty(it) }
 
     for (method in methods) {
       val f = FunSpec.builder(method.kFieldName).apply {
@@ -31,22 +31,27 @@ fun generateWrapCefToK(file : FileSpec.Builder, mapper: CefTypeMapperGenerator, 
           addParameter(p.kParamName, p.kParamType)
         }
 
-        beginControlFlow("require(obj.pointed.base.size.toInt() >= %T.size)", rawStruct)
+        beginControlFlow("return %M", fnMemScoped)
+        beginControlFlow("require(cefStruct.pointed.base.size.toInt() >= %T.size)", rawStruct)
         addStatement("%S + ", "the actual size of the ${rawStruct.simpleName} reference ")
-        addStatement("%S + obj.pointed.base.size + %S + %T.size", "is ", " less than ", rawStruct)
+        addStatement("%S + cefStruct.pointed.base.size + %S + %T.size", "is ", " less than ", rawStruct)
         endControlFlow()
 
-        addStatement("val handler = obj.pointed.${method.cFieldName}")
-        addStatement("⇥⇥?: return super.${method.kFieldName}(${method.parameters.joinToString(", ") { it.kParamName }})⇤⇤")
+        addStatement("val memberFunction = cefStruct.pointed.${method.cFieldName}")
+
+        beginControlFlow("require(memberFunction != null)")
+        addStatement("%S", "function ${method.cFieldName} has null pointer value in ${rawStruct.simpleName}")
+        endControlFlow()
 
         for (param in method.parameters) {
           addCode(mapper.mapTypeFromKToCefCode(param, param.kParamName, param.tmpParamName))
         }
 
-        addStatement("val cefResult = handler.%M(obj${method.parameters.joinToString("") { ", " + it.tmpParamName }})", fnInvoke)
+        addStatement("val cefResult = memberFunction.%M(cefStruct${method.parameters.joinToString("") { ", " + it.tmpParamName }})", fnInvoke)
 
         addCode(mapper.mapTypeFromCefToKCode(method, "cefResult", "kResult"))
-        addStatement("return kResult")
+        addStatement("return@memScoped kResult")
+        endControlFlow()
       }.build()
 
       addFunction(f)
@@ -55,9 +60,9 @@ fun generateWrapCefToK(file : FileSpec.Builder, mapper: CefTypeMapperGenerator, 
 
 
   FunSpec.builder(wrapCefToKName).apply {
-    addParameter("obj", rawStruct.asCPointer())
+    addParameter("cefStruct", rawStruct.asCPointer())
     returns(kInterfaceTypeName)
 
-    addStatement("return $kWrapperTypeName(obj)")
+    addStatement("return $kWrapperTypeName(cefStruct)")
   }.build().also { file.addFunction(it) }
 }

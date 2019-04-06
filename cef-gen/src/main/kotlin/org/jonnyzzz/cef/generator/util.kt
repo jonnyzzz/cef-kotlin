@@ -29,6 +29,7 @@ val cefBaseRefCountedKImpl = ClassName("org.jonnyzzz.cef.internal", "KCefRefCoun
 val kotlinString = ClassName("kotlin", "String")
 
 val memberScopeType = ClassName("kotlinx.cinterop", "MemScope")
+val fnMemScoped = MemberName("kotlinx.cinterop", "memScoped")
 val arenaType = ClassName("kotlinx.cinterop", "Arena")
 val stableRef = ClassName("kotlinx.cinterop", "StableRef")
 val cValueType = ClassName("kotlinx.cinterop", "CValue")
@@ -49,6 +50,7 @@ val fnCefStablePrt = MemberName("org.jonnyzzz.cef.internal", "stablePtr")
 val fnAlloc = MemberName("kotlinx.cinterop", "alloc")
 val fnCValue = MemberName("kotlinx.cinterop", "cValue")
 val fnInvoke = MemberName("kotlinx.cinterop", "invoke")
+val fnUSeContents = MemberName("kotlinx.cinterop", "useContents")
 
 fun ClassifierDescriptor.toClassName(): ClassName = when(val firstParent = parents.first()) {
   is ClassDescriptor -> firstParent.toClassName().nestedClass(name.asString())

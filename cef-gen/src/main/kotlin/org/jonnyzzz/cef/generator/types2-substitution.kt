@@ -10,12 +10,16 @@ class CefTypeSubstitution(mappedClasses: List<CefKNTypeInfo>) {
   private val cToK = mappedClasses.associate { it.rawStruct to it }
 
   fun mapTypeFromCefToK(type: TypeName): TypeName {
-    if (type is ParameterizedTypeName && type.rawType != cPointerType) {
+    if (type is ParameterizedTypeName /*TODO: check is CPointer or CValue*/) {
       val struct = type.typeArguments.single()
       val mapped = cToK[struct]
       if (mapped != null) {
         return mapped.kInterfaceTypeName.copy(nullable = type.isNullable)
       }
+    }
+
+    cToK[type]?.let { mapped ->
+      return mapped.kInterfaceTypeName.copy(nullable = type.isNullable)
     }
 
     //TODO: include mapping of Int to Bool where possible (based on documentation analysis)
@@ -28,21 +32,39 @@ class CefTypeMapperGenerator(
         simpleTypes: Sequence<KNSimpleTypeInfo>,
         refCounted: Sequence<KNRefCountedTypeInfo>
 ) {
-  private val cToK = (/*simpleTypes + */refCounted).map{ it.rawStruct to it }.toMap()
-  private val kToC = (/*simpleTypes + */refCounted).map{ it.kInterfaceTypeName to it }.toMap()
+  private val cToK = (simpleTypes + refCounted).map{ it.rawStruct to it }.toMap()
+  private val kToC = (simpleTypes + refCounted).map{ it.kInterfaceTypeName to it }.toMap()
 
   private fun mapTypeFromKToCefCode(kType: TypeName, cType: TypeName, inputVal: String, outputVal: String) = buildCodeBlock {
-    if (cType is ParameterizedTypeName && cType.rawType != cPointerType) {
+    if (cType is ParameterizedTypeName /*TODO: check is CPointer or CValue*/) {
       val struct = cType.typeArguments.single()
       val mapped = cToK[struct]
       if (mapped != null) {
-        beginControlFlow("val $outputVal = if ($inputVal is %T)", mapped.kWrapperTypeName)
         if (mapped is KNRefCountedTypeInfo) {
-          addStatement("$inputVal.obj.%M.base.add_ref?.%M($inputVal.obj.%M())", fnPointed, fnInvoke, fnReinterpret)
+          beginControlFlow("val $outputVal = if ($inputVal is %T)", mapped.kWrapperTypeName)
+          addStatement("$inputVal.cefStruct.%M.base.add_ref?.%M($inputVal.cefStruct.%M())", fnPointed, fnInvoke, fnReinterpret)
+          addStatement("$inputVal.cefStruct")
+          nextControlFlow("else")
+        } else {
+          beginControlFlow("val $outputVal = run")
         }
-        addStatement("$inputVal.obj")
-        nextControlFlow("else")
-        addStatement("$inputVal?.let { ${mapped.wrapKtoCefName}(it) }")
+
+        val mapperFn = when (mapped) {
+          is KNRefCountedTypeInfo -> mapped.wrapKtoCefName
+          is KNSimpleTypeInfo -> when {
+            cType.rawType.copy(nullable = false) == cPointerType -> mapped.wrapKtoCefPointerName
+            cType.rawType.copy(nullable = false) == cValueType -> mapped.wrapKtoCefValueName
+            else -> error("Unsupported simple type: $cType")
+          }
+          else -> error("Unexpected $mapped")
+        }
+
+        if (kType.isNullable) {
+          addStatement("$inputVal?.let { $mapperFn(it) }")
+        } else {
+          addStatement("$mapperFn($inputVal)")
+        }
+
         endControlFlow()
         return@buildCodeBlock
       }
@@ -53,12 +75,22 @@ class CefTypeMapperGenerator(
   }
 
   private fun mapTypeFromCefToKCode(kType: TypeName, cType: TypeName, inputVal: String, outputVal: String) = buildCodeBlock {
-    if (cType is ParameterizedTypeName && cType.rawType != cPointerType) {
+    if (cType is ParameterizedTypeName/*TODO: check is CPointer or CValue*/) {
       val struct = cType.typeArguments.single()
       val mapped = cToK[struct]
       if (mapped != null) {
+        val mapperFn = when(mapped) {
+          is KNSimpleTypeInfo -> mapped.wrapCefToKName
+          is KNRefCountedTypeInfo -> mapped.wrapCefToKName
+          else -> error("Unexpected $mapped")
+        }
 
-        addStatement("val $outputVal = $inputVal?.let { ${mapped.wrapCefToKName}(it) }")
+        if (kType.isNullable) {
+          addStatement("val $outputVal = $inputVal?.let { $mapperFn(it) }")
+        } else {
+          addStatement("val $outputVal = $mapperFn($inputVal)")
+        }
+
         return@buildCodeBlock
       }
     }

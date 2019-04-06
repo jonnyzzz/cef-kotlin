@@ -9,10 +9,10 @@ fun generateWrapKtoCef(mapper: CefTypeMapperGenerator, info: KNRefCountedTypeInf
   FunSpec.builder(wrapKtoCefName).apply {
 
     returns(rawStruct.asCPointer())
-    addParameter(ParameterSpec.builder("obj", kInterfaceTypeName).build())
+    addParameter(ParameterSpec.builder("kObj", kInterfaceTypeName).build())
 
     addStatement("val scope = %T()", arenaType)
-    addStatement("val stableRef = scope.%M(%T(scope, obj))", fnCefStablePrt, cefBaseRefCountedKImpl)
+    addStatement("val stableRef = scope.%M(%T(scope, kObj))", fnCefStablePrt, cefBaseRefCountedKImpl)
     addCode(generateCValueWithInitBlock(mapper, info).build())
 
     addStatement("return cValue.%M<%T>().ptr", fnReinterpret, rawStruct)
@@ -46,9 +46,10 @@ private fun generateCValueWithInitBlock(mapper: CefTypeMapperGenerator, info: KN
 
     for (p in info.methods) {
       beginControlFlow("cef.${p.cFieldName} = %M", fnStaticCFunction)
-
       addStatement((listOf(p.THIS) + p.parameters).joinToString(", ") { it.cParamName } + " ->")
       add(generateTHISUnwrap(info, p).build())
+
+      beginControlFlow("%M", fnMemScoped)
 
       for (param in p.parameters) {
         add(mapper.mapTypeFromCefToKCode(param, param.kParamName, param.tmpParamName))
@@ -59,6 +60,7 @@ private fun generateCValueWithInitBlock(mapper: CefTypeMapperGenerator, info: KN
       add(mapper.mapTypeFromKToCefCode(p, "kResult", "cResult"))
 
       addStatement("return@staticCFunction cResult")
+      endControlFlow()
       endControlFlow()
     }
 

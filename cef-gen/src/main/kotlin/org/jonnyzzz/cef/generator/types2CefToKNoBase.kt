@@ -11,18 +11,33 @@ private val KNSimplePublicField.tmpFieldName
   get() = kFieldName + "K"
 
 fun generateWrapKtoCefNoBase(file : FileSpec.Builder, info: KNSimpleTypeInfo, mapper: CefTypeMapperGenerator): Unit = info.run {
+  FunSpec.builder(wrapCefToKName).apply {
+    returns(kInterfaceTypeName)
+    addParameter(ParameterSpec.builder("cefStruct", rawStruct.asCPointer()).build())
+
+    addStatement("val pCefStruct = cefStruct.%M", fnPointed)
+    generateFunctionBody(info, mapper)
+  }.also { file.addFunction(it.build()) }
 
   FunSpec.builder(wrapCefToKName).apply {
     returns(kInterfaceTypeName)
-    addParameter(ParameterSpec.builder("obj", rawStruct.asCPointer()).build())
+    addParameter(ParameterSpec.builder("cefStruct", rawStruct.asCValue()).build())
 
-    addStatement("val pObj = obj.%M", fnPointed)
-    for (p in info.fields) {
-      addCode(mapper.mapTypeFromCefToKCode(p, "pObj.${p.cFieldName}", p.tmpFieldName))
-    }
-
-    addStatement("return %T(\n%L)", kInterfaceTypeName, info.fields.map { p ->
-      CodeBlock.of("${p.kFieldName} = ${p.tmpFieldName}")
-    }.joinToCode(",\n"))
+    beginControlFlow("return cefStruct.%M", fnUSeContents)
+    addStatement("val pCefStruct = this")
+    generateFunctionBody(info, mapper)
+    endControlFlow()
   }.also { file.addFunction(it.build()) }
+}
+
+
+private fun FunSpec.Builder.generateFunctionBody(info: KNSimpleTypeInfo,
+                                                 mapper: CefTypeMapperGenerator) {
+  for (p in info.fields) {
+    addCode(mapper.mapTypeFromCefToKCode(p, "pCefStruct.${p.cFieldName}", p.tmpFieldName))
+  }
+
+  addStatement("return %T(\n%L)", info.kInterfaceTypeName, info.fields.map { p ->
+    CodeBlock.of("${p.kFieldName} = ${p.tmpFieldName}")
+  }.joinToCode(",\n"))
 }

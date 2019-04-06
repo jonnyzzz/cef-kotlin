@@ -84,13 +84,18 @@ interface KNBaseInfo {
   val rawStruct: ClassName
 
   val kInterfaceTypeName get() = api.kInterfaceTypeName
-
-  val wrapKtoCefName get() = "wrap${kInterfaceTypeName.simpleName}ToCef"
-  val wrapCefToKName get() = "wrapCefTo${kInterfaceTypeName.simpleName}"
 }
 
 interface KNSimpleTypeInfo : KNBaseInfo {
   val fields : List<KNSimplePublicField>
+
+  val wrapKtoCefPointerName get() = "wrap${kInterfaceTypeName.simpleName}ToCefPtr"
+  val wrapKtoCefValueName get() = "wrap${kInterfaceTypeName.simpleName}ToCefValue"
+
+  /**
+   * Declares function from CPointer<RawStruct> and CValue<RawStruct>
+   */
+  val wrapCefToKName get() = "wrapCefTo${kInterfaceTypeName.simpleName}"
 }
 
 interface KNRefCountedTypeInfo : KNBaseInfo {
@@ -99,5 +104,8 @@ interface KNRefCountedTypeInfo : KNBaseInfo {
 
   val methods : List<KNRefCountedPublicFunction>
   val refCountMethods : List<KNRefCountedFunction>
+
+  val wrapKtoCefName get() = "wrap${kInterfaceTypeName.simpleName}ToCef"
+  val wrapCefToKName get() = "wrapCefTo${kInterfaceTypeName.simpleName}"
 }
 
