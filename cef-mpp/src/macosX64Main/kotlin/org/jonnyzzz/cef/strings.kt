@@ -3,6 +3,7 @@ package org.jonnyzzz.cef
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.convert
+import kotlinx.cinterop.invoke
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
@@ -10,6 +11,7 @@ import kotlinx.cinterop.readBytes
 import kotlinx.cinterop.sizeOf
 import org.jonnyzzz.cef.generated.cefStringToUtf8
 import org.jonnyzzz.cef.interop.cef_string_t
+import org.jonnyzzz.cef.interop.cef_string_userfree_free
 import org.jonnyzzz.cef.interop.cef_string_utf8_clear
 import org.jonnyzzz.cef.interop.cef_string_utf8_t
 import org.jonnyzzz.cef.interop.cef_string_utf8_to_utf16
@@ -18,6 +20,7 @@ import platform.posix.memset
 import kotlin.math.min
 
 fun cef_string_t.copyFrom(str: String) {
+  cef_string_userfree_free?.invoke(this.ptr)
   //see https://github.com/cztomczak/cefcapi/blob/master/examples/main_win.c
   cef_string_utf8_to_utf16(str, str.length.convert(), this.ptr)
 }
