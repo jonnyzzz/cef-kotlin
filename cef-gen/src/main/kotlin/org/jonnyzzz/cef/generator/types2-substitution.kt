@@ -15,20 +15,11 @@ class CefTypeSubstitution(mappedClasses: List<CefKNTypeInfo>) {
   fun mapTypeFromCefToK(type: KNApiFunctionParam) = mapTypeFromCefToK(type.kParamType, type.isConstInC)
 
   private fun mapTypeFromCefToK(type: TypeName, cConst: Boolean = false): TypeName {
-
-    if (type == cefString16 || type == cefString16.asCValue()) {
+    if (type == cefString16 || type == cefString16.asCValue() || (cConst && type == cefString16.asCPointer())) {
       return kotlinString
     }
 
-    if (type == cefString16.copy(nullable = true) || type == cefString16.asCValue().copy(nullable = true)) {
-      return kotlinString.copy(nullable = true)
-    }
-
-    if (cConst && type == cefString16.asCPointer()) {
-      return kotlinString
-    }
-
-    if (cConst && type == cefString16.asCPointer().copy(nullable = true)) {
+    if (type == cefString16.copy(nullable = true) || type == cefString16.asCValue().copy(nullable = true) || (cConst && type == cefString16.asCPointer().copy(nullable = true))) {
       return kotlinString.copy(nullable = true)
     }
 
@@ -160,9 +151,6 @@ class CefTypeMapperGenerator(
 
   fun mapTypeFromCefToKCode(context: KNRefCountedPublicFunctionParam, inputVal: String, outputVal: String) =
           mapTypeFromCefToKCode(context.kParamType, context.cParamType, inputVal, outputVal)
-
-  fun mapTypeFromKToCefCode(context: KNSimplePublicField, inputVal: String, outputVal: String) =
-          mapTypeFromKToCefCode(context.kReturnType, context.cReturnType, inputVal, outputVal)
 
   fun mapTypeFromCefToKCode(context: KNSimplePublicField, inputVal: String, outputVal: String) =
           mapTypeFromCefToKCode(context.kReturnType, context.cReturnType, inputVal, outputVal)
