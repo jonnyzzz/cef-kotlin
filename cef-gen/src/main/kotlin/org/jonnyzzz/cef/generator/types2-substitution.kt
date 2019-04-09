@@ -10,7 +10,7 @@ import org.jonnyzzz.cef.generator.model.CefKNTypeInfo
 class CefTypeSubstitution(mappedClasses: List<CefKNTypeInfo>) {
   private val cToK = mappedClasses.associate { it.rawStruct to it }
 
-  fun mapTypeFromCefToK(type: KNApiFunction) = mapTypeFromCefToK(type.kReturnType)
+  fun mapTypeFromCefToK(type: KNApiFunction) = mapTypeFromCefToK(type.kReturnType, true /*assume returned pointer is immutable*/)
   fun mapTypeFromCefToK(type: KNApiField) = mapTypeFromCefToK(type.kReturnType, type.isConstInC)
   fun mapTypeFromCefToK(type: KNApiFunctionParam) = mapTypeFromCefToK(type.kParamType, type.isConstInC)
 

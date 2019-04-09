@@ -15,6 +15,16 @@ fun String.tokenizeNames() = sequence<String> {
         yield("by")
         yield("index")
       }
+      t == "bylname" -> {
+        yield("by")
+        yield("l")
+        yield("name")
+      }
+      t == "byqname" -> {
+        yield("by")
+        yield("q")
+        yield("name")
+      }
       t == "byident" -> {
         yield("by")
         yield("ident")
