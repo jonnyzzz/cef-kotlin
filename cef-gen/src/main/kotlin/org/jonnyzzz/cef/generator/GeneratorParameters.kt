@@ -5,6 +5,8 @@ import com.squareup.kotlinpoet.TypeName
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.types.KotlinType
 import org.jonnyzzz.cef.generator.c.CefDeclarations
+import org.jonnyzzz.cef.generator.model.CefApiModel
+import org.jonnyzzz.cef.generator.model.CefImplModel
 import org.jonnyzzz.cef.generator.model.CefKNTypeInfo
 import java.io.File
 
@@ -28,4 +30,10 @@ data class GeneratorParameters(
 
   lateinit var cefBaseClassDescriptor: ClassDescriptor
   lateinit var cefBaseClassDescriptorInfo: CefKNTypeInfo
+
+
+  lateinit var cefApiModel: CefApiModel
+  lateinit var cefImplModel: CefImplModel
+  lateinit var cefTypeSubstitution: CefTypeSubstitution
+  lateinit var cefTypeMapperGenerator: CefTypeMapperGenerator
 }

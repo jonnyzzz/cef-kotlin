@@ -1,6 +1,8 @@
-package org.jonnyzzz.cef.generator
+package org.jonnyzzz.cef.generator.model
 
-import org.jonnyzzz.cef.generator.model.CefKNTypeInfo
+import org.jonnyzzz.cef.generator.CefTypeSubstitution
+import org.jonnyzzz.cef.generator.replaceTypes
+import org.jonnyzzz.cef.generator.toKNApiTypeInfo
 
 
 class CefApiModel(mappedClasses: List<CefKNTypeInfo>,

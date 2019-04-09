@@ -104,9 +104,9 @@ private fun GeneratorParameters.visitModule(module: ModuleDescriptor) {
   resolveCefCDeclarations()
   resolveCefBaseRefCounted(descriptors.filterIsInstance<ClassDescriptor>())
   collectAllEnums(descriptors.filterIsInstance<ClassDescriptor>())
-  generateCopyFunctions(descriptors.filterIsInstance<ClassDescriptor>())
+  resolveCefTypes2(descriptors.filterIsInstance<ClassDescriptor>())
+  generateTypes2()
   generateValFunctions(descriptors.filterIsInstance<PropertyDescriptor>())
-  generateTypes2(descriptors.filterIsInstance<ClassDescriptor>())
 }
 
 private fun GeneratorParameters.resolveCefCDeclarations() {

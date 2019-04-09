@@ -30,8 +30,8 @@ class CefTypeSubstitution(mappedClasses: List<CefKNTypeInfo>) {
 }
 
 class CefTypeMapperGenerator(
-        simpleTypes: Sequence<KNSimpleTypeInfo>,
-        refCounted: Sequence<KNRefCountedTypeInfo>
+        simpleTypes: List<KNSimpleTypeInfo>,
+        refCounted: List<KNRefCountedTypeInfo>
 ) {
   private val cToK = (simpleTypes + refCounted).map{ it.rawStruct to it }.toMap()
   private val kToC = (simpleTypes + refCounted).map{ it.kInterfaceTypeName to it }.toMap()
