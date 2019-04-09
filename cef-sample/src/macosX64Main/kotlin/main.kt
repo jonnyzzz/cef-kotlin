@@ -1,6 +1,5 @@
 package org.jonnyzzz.cef.example
 
-import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.convert
 import kotlinx.cinterop.memScoped
@@ -14,9 +13,11 @@ import org.jonnyzzz.cef.generated.KCefBrowserSettings
 import org.jonnyzzz.cef.generated.KCefClient
 import org.jonnyzzz.cef.generated.KCefSettings
 import org.jonnyzzz.cef.generated.KCefWindowInfo
-import org.jonnyzzz.cef.generated.wrapKtoCef
-import org.jonnyzzz.cef.interop._cef_browser_process_handler_t
-import org.jonnyzzz.cef.interop._cef_list_value_t
+import org.jonnyzzz.cef.generated.wrapKCefAppToCef
+import org.jonnyzzz.cef.generated.wrapKCefBrowserSettingsToCefPtr
+import org.jonnyzzz.cef.generated.wrapKCefClientToCef
+import org.jonnyzzz.cef.generated.wrapKCefSettingsToCefPtr
+import org.jonnyzzz.cef.generated.wrapKCefWindowInfoToCefPtr
 import org.jonnyzzz.cef.interop.cef_browser_host_create_browser
 import org.jonnyzzz.cef.interop.cef_execute_process
 import org.jonnyzzz.cef.interop.cef_initialize
@@ -64,14 +65,12 @@ fun main(args: Array<String>): Unit = memScoped {
       val settings = KCefBrowserSettings()
 
       url.copyFrom("https://jonnyzzz.com")
-      cef_browser_host_create_browser(windowInfo.wrapKtoCef(this@memScoped), client.wrapKtoCef(), url.ptr, settings.wrapKtoCef(this@memScoped), null)
+      cef_browser_host_create_browser(wrapKCefWindowInfoToCefPtr(windowInfo), wrapKCefClientToCef(client), url.ptr, wrapKCefBrowserSettingsToCefPtr(settings), null)
     }
   }
 
   val app = object : KCefApp() {
-    override fun getBrowserProcessHandler(): CPointer<_cef_browser_process_handler_t>? {
-      return browserProcessHandler.wrapKtoCef()
-    }
+    override fun getBrowserProcessHandler(): KCefBrowserProcessHandler? = browserProcessHandler
   }
 
   val childProcess = cef_execute_process(mainArgs.wrapKtoCef(), null, null)
@@ -83,7 +82,7 @@ fun main(args: Array<String>): Unit = memScoped {
           browserSubprocessPath = bundlePath
   )
 
-  cef_initialize(mainArgs.wrapKtoCef(), cefSettings.wrapKtoCef(this@memScoped), app.wrapKtoCef(), null)
+  cef_initialize(mainArgs.wrapKtoCef(), wrapKCefSettingsToCefPtr(cefSettings), wrapKCefAppToCef(app), null)
   println("cef_initialize - complete")
 
   cef_run_message_loop()
