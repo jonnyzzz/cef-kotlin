@@ -46,7 +46,7 @@ private fun mainImpl(args: Array<String>) {
   val outputDir = args.getOrNull(2)?.let { File(it).absoluteFile } ?: error("Failed to find target directory")
 
   //TODO: resolve correct K/N library path (aka internal version)!
-  val stdlibPath = File(System.getProperty("user.home")) / ".konan" / "kotlin-native-macos-1.2-eap-9117" / "klib" / "common" / "stdlib"
+  val stdlibPath = File(System.getProperty("user.home")) / ".konan" / "kotlin-native-macos-1.2-eap-9319" / "klib" / "common" / "stdlib"
 
   val stdlib = createKonanLibrary(
           libraryFile = KFile(stdlibPath.toPath()),
