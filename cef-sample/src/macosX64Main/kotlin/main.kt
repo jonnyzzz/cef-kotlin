@@ -82,6 +82,8 @@ fun main(args: Array<String>): Unit = memScoped {
           browserSubprocessPath = bundlePath
   )
 
+  println("cef_initialize - before")
+
   cef_initialize(mainArgs.wrapKtoCef(), wrapKCefSettingsToCefPtr(cefSettings), wrapKCefAppToCef(app), null)
   println("cef_initialize - complete")
 
