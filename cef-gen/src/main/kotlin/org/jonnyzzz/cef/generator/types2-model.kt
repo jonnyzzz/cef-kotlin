@@ -89,6 +89,7 @@ interface KNBaseInfo {
 interface KNSimpleTypeInfo : KNBaseInfo {
   val fields : List<KNSimplePublicField>
 
+  val assignKtoCefRaw get() = "assign${kInterfaceTypeName.simpleName}ToCef"
   val wrapKtoCefPointerName get() = "wrap${kInterfaceTypeName.simpleName}ToCefPtr"
   val wrapKtoCefValueName get() = "wrap${kInterfaceTypeName.simpleName}ToCefValue"
 

@@ -28,7 +28,7 @@ fun GeneratorParameters.generateTypes2(clazzez: List<ClassDescriptor>) {
 
   println("Detected ${mappedClasses.size} classes to generate...")
 
-  val substitution = CefTypeSubstitution(mappedClasses)
+  val substitution = CefTypeSubstitution(mappedClasses - cefBaseClassDescriptorInfo/*org.jonnyzzz.cef.generated.KCefV8ValueWrapper.getUserData*/)
   val cToMappedApi = CefApiModel(mappedClasses, substitution)
 
   cToMappedApi.apiTypes.forEach {

@@ -12,8 +12,7 @@ private val KNSimplePublicField.tmpFieldName
   get() = kFieldName + "C"
 
 fun generateWrapCefToKNoBase(file : FileSpec.Builder, info: KNSimpleTypeInfo, mapper: CefTypeMapperGenerator): Unit = info.run {
-  FunSpec.builder(wrapKtoCefPointerName).apply {
-    addModifiers(KModifier.PRIVATE)
+  FunSpec.builder(assignKtoCefRaw).apply {
     returns(UNIT)
     receiver(rawStruct)
     addParameter(ParameterSpec.builder("cefStruct", kInterfaceTypeName).build())
@@ -26,18 +25,7 @@ fun generateWrapCefToKNoBase(file : FileSpec.Builder, info: KNSimpleTypeInfo, ma
     // - _cef_string_^ => copyFrom()
 
     for (p in info.fields) {
-      addCode(mapper.mapTypeFromKToCefCode(p, "cefStruct.${p.kFieldName}", p.tmpFieldName))
-    }
-
-    for (p in info.fields) {
-      when (p.cReturnType) {
-        cefString16,
-        cefString16.asNullableCPointer() ->
-          addStatement("%M(this::${p.cFieldName}, ${p.tmpFieldName})", MemberName("org.jonnyzzz.cef", "copyCefString"))
-
-        else ->
-          addStatement("${p.cFieldName} = ${p.tmpFieldName}")
-      }
+      addCode(mapper.assignTypeFromKToCefCode(p, "cefStruct.${p.kFieldName}"))
     }
   }.build().also { file.addFunction(it) }
 
@@ -46,7 +34,7 @@ fun generateWrapCefToKNoBase(file : FileSpec.Builder, info: KNSimpleTypeInfo, ma
     receiver(memberScopeType)
     addParameter(ParameterSpec.builder("cefStruct", kInterfaceTypeName).build())
 
-    addStatement("return %M<%T>{ $wrapKtoCefPointerName(cefStruct) }.ptr", fnAlloc, rawStruct)
+    addStatement("return %M<%T>{ $assignKtoCefRaw(cefStruct) }.ptr", fnAlloc, rawStruct)
   }.build().also { file.addFunction(it) }
 
 
@@ -54,7 +42,7 @@ fun generateWrapCefToKNoBase(file : FileSpec.Builder, info: KNSimpleTypeInfo, ma
     returns(rawStruct.asCValue())
     addParameter(ParameterSpec.builder("cefStruct", kInterfaceTypeName).build())
 
-    addStatement("return %M<%T>{ $wrapKtoCefValueName(cefStruct) }", fnCValue, rawStruct)
+    addStatement("return %M<%T>{ $assignKtoCefRaw(cefStruct) }", fnCValue, rawStruct)
 
   }.build().also { file.addFunction(it) }
 }

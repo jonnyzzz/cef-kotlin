@@ -1,5 +1,6 @@
 package org.jonnyzzz.cef.generator
 
+import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.buildCodeBlock
@@ -74,6 +75,28 @@ class CefTypeMapperGenerator(
     addStatement("val $outputVal = $inputVal")
   }
 
+  fun assignTypeFromKToCefCode(context: KNSimplePublicField, inputVal: String) = buildCodeBlock {
+    val cType = context.cReturnType
+    val outputVal = context.cFieldName
+
+    if (context.cReturnType == cefString16 || context.cReturnType == cefString16.asNullableCPointer()) {
+      addStatement("%M(this::${context.cFieldName}, $inputVal)", MemberName("org.jonnyzzz.cef", "copyCefString"))
+      return@buildCodeBlock
+    }
+
+    cToK[cType]?.let { mapped->
+      require(mapped is KNSimpleTypeInfo) {
+        "KN Simple Type cannot have non-simple and non-primitive typed fields in ${context.cFieldName} ${context.cReturnType}"
+      }
+
+      require(!cType.isNullable) { "type $cType must not be null" }
+      addStatement("$outputVal.${mapped.assignKtoCefRaw}($inputVal)")
+      return@buildCodeBlock
+    }
+
+    addStatement("$outputVal = $inputVal")
+  }
+
   private fun mapTypeFromCefToKCode(kType: TypeName, cType: TypeName, inputVal: String, outputVal: String) = buildCodeBlock {
     if (cType is ParameterizedTypeName/*TODO: check is CPointer or CValue*/) {
       val struct = cType.typeArguments.single()
@@ -95,6 +118,11 @@ class CefTypeMapperGenerator(
       }
     }
 
+    (cToK[cType] as? KNSimpleTypeInfo)?.let { mapped ->
+      require(!cType.isNullable) { "type $cType must not be null"}
+      addStatement("val $outputVal = ${mapped.wrapCefToKName}($inputVal)")
+      return@buildCodeBlock
+    }
 
     addStatement("val $outputVal = $inputVal")
   }
