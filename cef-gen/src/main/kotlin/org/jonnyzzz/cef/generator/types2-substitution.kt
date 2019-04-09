@@ -10,7 +10,28 @@ import org.jonnyzzz.cef.generator.model.CefKNTypeInfo
 class CefTypeSubstitution(mappedClasses: List<CefKNTypeInfo>) {
   private val cToK = mappedClasses.associate { it.rawStruct to it }
 
-  fun mapTypeFromCefToK(type: TypeName): TypeName {
+  fun mapTypeFromCefToK(type: KNApiFunction) = mapTypeFromCefToK(type.kReturnType)
+  fun mapTypeFromCefToK(type: KNApiField) = mapTypeFromCefToK(type.kReturnType, type.isConstInC)
+  fun mapTypeFromCefToK(type: KNApiFunctionParam) = mapTypeFromCefToK(type.kParamType, type.isConstInC)
+
+  private fun mapTypeFromCefToK(type: TypeName, cConst: Boolean = false): TypeName {
+
+    if (type == cefString16 || type == cefString16.asCValue()) {
+      return kotlinString
+    }
+
+    if (type == cefString16.copy(nullable = true) || type == cefString16.asCValue().copy(nullable = true)) {
+      return kotlinString.copy(nullable = true)
+    }
+
+    if (cConst && type == cefString16.asCPointer()) {
+      return kotlinString
+    }
+
+    if (cConst && type == cefString16.asCPointer().copy(nullable = true)) {
+      return kotlinString.copy(nullable = true)
+    }
+
     if (type is ParameterizedTypeName /*TODO: check is CPointer or CValue*/) {
       val struct = type.typeArguments.single()
       val mapped = cToK[struct]

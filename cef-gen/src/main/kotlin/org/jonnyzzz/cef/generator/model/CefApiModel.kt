@@ -9,7 +9,7 @@ class CefApiModel(mappedClasses: List<CefKNTypeInfo>,
                   private val substitution: CefTypeSubstitution) {
 
   private val mappedTypes = mappedClasses.map { type ->
-    type to replaceTypes(toKNApiTypeInfo(type), substitution::mapTypeFromCefToK)
+    type to replaceTypes(toKNApiTypeInfo(type), substitution)
   }
 
   val apiTypes = mappedTypes.asSequence().map { it.second }.asSequence()

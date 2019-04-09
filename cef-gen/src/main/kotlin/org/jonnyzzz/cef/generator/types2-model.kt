@@ -19,7 +19,10 @@ interface KNBaseMember {
 }
 
 
-interface KNApiField : KNApiMember
+interface KNApiField : KNApiMember {
+  val isConstInC : Boolean
+}
+
 interface KNSimpleField : KNBaseMember
 interface KNSimplePublicField : KNSimpleField {
   val api : KNApiField
@@ -33,6 +36,7 @@ interface KNSimplePublicField : KNSimpleField {
 interface KNApiFunctionParam {
   val kParamName: String
   val kParamType: TypeName
+  val isConstInC: Boolean
 }
 
 interface KNRefCountedFunctionParam {

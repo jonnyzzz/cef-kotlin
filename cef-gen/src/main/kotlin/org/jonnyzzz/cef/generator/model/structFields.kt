@@ -21,7 +21,7 @@ data class KPropertyField(
         override val cFieldName: String,
         val propName: String,
         val propType: TypeName,
-        private val cefMember: StructField?
+        val cefMember: StructField?
 ) : KStructField() {
   override val docComment: String?
     get() = cefMember?.docComment

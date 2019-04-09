@@ -14,6 +14,7 @@ fun toKNApiTypeInfo(info: CefKNTypeInfo): KNApiTypeInfo = object : KNApiTypeInfo
         object : KNApiFunctionParam {
           override val kParamName = param.paramName
           override val kParamType = param.paramType
+          override val isConstInC = param.cefParam?.type?.trim()?.startsWith("const ") ?: false
         }
       }
     }
@@ -23,6 +24,7 @@ fun toKNApiTypeInfo(info: CefKNTypeInfo): KNApiTypeInfo = object : KNApiTypeInfo
     object : KNApiField, KDocumented by p {
       override val kFieldName = p.propName
       override val kReturnType = p.propType
+      override val isConstInC = p.cefMember?.type?.trim()?.startsWith("const ") ?: false
     }
   }
 }
