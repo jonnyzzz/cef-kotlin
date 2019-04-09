@@ -51,8 +51,8 @@ class CefTypeMapperGenerator(
   private fun mapTypeFromKToCefCode(kType: TypeName, cType: TypeName, inputVal: String, outputVal: String) = buildCodeBlock {
     if (cType is ParameterizedTypeName /*TODO: check is CPointer or CValue*/) {
       val struct = cType.typeArguments.single()
-      val mapped = cToK[struct]
-      if (mapped != null) {
+
+      cToK[struct]?.let { mapped ->
         if (mapped is KNRefCountedTypeInfo) {
           beginControlFlow("val $outputVal = if ($inputVal is %T)", mapped.kWrapperTypeName)
           addStatement("$inputVal.cefStruct.%M.base.add_ref?.%M($inputVal.cefStruct.%M())", fnPointed, fnInvoke, fnReinterpret)
@@ -81,8 +81,17 @@ class CefTypeMapperGenerator(
         endControlFlow()
         return@buildCodeBlock
       }
-    }
 
+      if (struct == cefString16 && kType.copy(nullable = false) == kotlinString) {
+        val method = when {
+          cType.rawType.copy(nullable = false) == cPointerType -> MemberName("org.jonnyzzz.cef", "wrapStringToCefPointerName")
+          cType.rawType.copy(nullable = false) == cValueType -> MemberName("org.jonnyzzz.cef", "wrapStringToCefValueName")
+          else -> error("Unsupported simple type: $cType")
+        }
+        addStatement("val $outputVal = $inputVal?.let { %M(it) }", method)
+        return@buildCodeBlock
+      }
+    }
 
     addStatement("val $outputVal = $inputVal")
   }
@@ -92,7 +101,7 @@ class CefTypeMapperGenerator(
     val outputVal = context.cFieldName
 
     if (context.cReturnType == cefString16 || context.cReturnType == cefString16.asNullableCPointer()) {
-      addStatement("%M(this::${context.cFieldName}, $inputVal)", MemberName("org.jonnyzzz.cef", "copyCefString"))
+      addStatement("${context.cFieldName}.%M($inputVal)", MemberName("org.jonnyzzz.cef", "wrapStringToCefRaw"))
       return@buildCodeBlock
     }
 
@@ -133,6 +142,16 @@ class CefTypeMapperGenerator(
     (cToK[cType] as? KNSimpleTypeInfo)?.let { mapped ->
       require(!cType.isNullable) { "type $cType must not be null"}
       addStatement("val $outputVal = ${mapped.wrapCefToKName}($inputVal)")
+      return@buildCodeBlock
+    }
+
+    if (kType == kotlinString) {
+      addStatement("val $outputVal = $inputVal.%M()", MemberName("org.jonnyzzz.cef", "asString"))
+      return@buildCodeBlock
+    }
+
+    if (kType == kotlinString.copy(nullable = true)) {
+      addStatement("val $outputVal = $inputVal?.%M()", MemberName("org.jonnyzzz.cef", "asString"))
       return@buildCodeBlock
     }
 

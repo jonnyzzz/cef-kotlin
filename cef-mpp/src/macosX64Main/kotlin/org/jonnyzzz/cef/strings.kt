@@ -1,7 +1,10 @@
 package org.jonnyzzz.cef
 
 import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.CValue
+import kotlinx.cinterop.MemScope
 import kotlinx.cinterop.alloc
+import kotlinx.cinterop.cValue
 import kotlinx.cinterop.convert
 import kotlinx.cinterop.invoke
 import kotlinx.cinterop.memScoped
@@ -9,20 +12,17 @@ import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.readBytes
 import kotlinx.cinterop.sizeOf
+import kotlinx.cinterop.useContents
 import org.jonnyzzz.cef.generated.cefStringToUtf8
 import org.jonnyzzz.cef.interop._cef_string_utf16_t
 import org.jonnyzzz.cef.interop.cef_string_t
-import org.jonnyzzz.cef.interop.cef_string_userfree_alloc
 import org.jonnyzzz.cef.interop.cef_string_userfree_free
-import org.jonnyzzz.cef.interop.cef_string_userfree_utf16_alloc
-import org.jonnyzzz.cef.interop.cef_string_utf16_set
 import org.jonnyzzz.cef.interop.cef_string_utf8_clear
 import org.jonnyzzz.cef.interop.cef_string_utf8_t
 import org.jonnyzzz.cef.interop.cef_string_utf8_to_utf16
 import org.jonnyzzz.cef.interop.char16Var
 import platform.posix.memset
 import kotlin.math.min
-import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty0
 
 
@@ -30,7 +30,9 @@ fun copyCefString(prop: KProperty0<cef_string_t>, str: _cef_string_utf16_t) {
   prop.get().copyFrom(str)
 }
 
-
+fun MemScope.wrapStringToCefPointerName(str: String) = alloc<cef_string_t> { copyFrom(str)}.ptr
+fun wrapStringToCefValueName(str: String) = cValue<cef_string_t> { copyFrom(str)}
+fun cef_string_t.wrapStringToCefRaw(str: String) = copyFrom(str)
 
 
 fun cef_string_t.copyFrom(str: String) {
@@ -67,7 +69,8 @@ fun cef_string_t.asString() : String {
   }
 }
 
-fun CPointer<cef_string_t>?.asString() = this?.pointed?.asString()
+fun CPointer<cef_string_t>.asString() = this.pointed.asString()
+fun CValue<cef_string_t>.asString() = this.useContents { asString() }
 
 var cef_string_t.value : String
   get() = asString()
