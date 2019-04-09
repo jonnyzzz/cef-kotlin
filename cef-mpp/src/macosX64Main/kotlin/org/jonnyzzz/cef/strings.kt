@@ -36,7 +36,6 @@ fun cef_string_t.wrapStringToCefRaw(str: String) = copyFrom(str)
 
 
 fun cef_string_t.copyFrom(str: String) {
-  cef_string_userfree_free?.invoke(this.ptr)
   //see https://github.com/cztomczak/cefcapi/blob/master/examples/main_win.c
   cef_string_utf8_to_utf16(str, str.length.convert(), this.ptr)
 }
